@@ -21,15 +21,17 @@ public class VueInscription extends Parent{
 		//Premier onglet de la page web
 		WebView webView = new WebView();
 		WebEngine engine = webView.getEngine();
-		engine.load(inscription.getUrls().get(0));
+//		engine.load(inscription.getUrls().get(0));
 		Tab ongletWeb = new Tab("Page web", webView);
-		TabPane onglets = new TabPane();
 		
 		//Ajout de la table
-		
+		Grille g = new Grille(inscription);
+		Tab ongletGrille = new Tab("Grille", g);
 		
 		//Ajout des onglets
-		onglets.getTabs().add(ongletWeb);
+		TabPane onglets = new TabPane();
+//		onglets.getTabs().add(ongletWeb);
+		onglets.getTabs().add(ongletGrille);
 		getChildren().add(onglets);
 		
 	}

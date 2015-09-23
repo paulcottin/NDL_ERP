@@ -10,6 +10,7 @@ import exceptions.DefaultException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import model.Colonne;
+import model.Donnee;
 import model.Ligne;
 import model.connecteurs.AccessConnector;
 
@@ -17,13 +18,11 @@ public abstract class Table {
 
 	protected int idTable;
 	protected String nom, famille;
-	protected ObservableList<Colonne> colonnes;
 	protected ObservableList<Ligne> lignes;
 	protected ObservableList<Option> options;
 
 	public Table(int idTable) {
 		this.idTable = idTable;
-		colonnes = FXCollections.observableArrayList();
 		lignes = FXCollections.observableArrayList();
 		options = FXCollections.observableArrayList();
 
@@ -35,32 +34,16 @@ public abstract class Table {
 	}
 
 	private void constructTable() throws DefaultException {
-		AccessConnector.openTable("colonnes");
-		try {
-			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			Column col = AccessConnector.table.getColumn("id_table");
-			while(cursor.findNextRow(col, idTable)) {
-				int id = cursor.getCurrentRow().getInt("id_colonne");
-				colonnes.add(new Colonne(id));
-				AccessConnector.openTable("colonnes");
-			}
-
-		} catch (ClassCastException e) {
-			throw new DefaultException("Erreur de conversion en entier");
-		} catch (IOException e) {
-			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
-		}
-		
-		AccessConnector.closeTable();
-		AccessConnector.openTable("lignes");
+		AccessConnector.openTable("donnees");
 		
 		try {
 			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
 			Column col = AccessConnector.table.getColumn("id_table");
 			while(cursor.findNextRow(col, idTable)) {
+				//TODO: sélectionner l'id maximum + Tant qu'il qu'on a pas ajouter toutes les 
+				//données d'une ligne on les recherche et ajoute + incrémenter l'id_ligne jusqu'au max
 				int id = cursor.getCurrentRow().getInt("id_ligne");
-				lignes.add(new Ligne(id));
-				AccessConnector.openTable("lignes");
+				AccessConnector.openTable("donnees");
 			}
 
 		} catch (ClassCastException e) {
@@ -88,12 +71,12 @@ public abstract class Table {
 		this.famille = famille;
 	}
 
-	public ObservableList<Colonne> getColonnes() {
-		return colonnes;
+	public ObservableList<Option> getOptions() {
+		return options;
 	}
 
-	public void setColonnes(ObservableList<Colonne> colonnes) {
-		this.colonnes = colonnes;
+	public void setOptions(ObservableList<Option> options) {
+		this.options = options;
 	}
 
 	public ObservableList<Ligne> getLignes() {
@@ -102,14 +85,6 @@ public abstract class Table {
 
 	public void setLignes(ObservableList<Ligne> lignes) {
 		this.lignes = lignes;
-	}
-
-	public ObservableList<Option> getOptions() {
-		return options;
-	}
-
-	public void setOptions(ObservableList<Option> options) {
-		this.options = options;
 	}
 
 }
