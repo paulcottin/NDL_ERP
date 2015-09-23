@@ -18,7 +18,7 @@ import model.connecteurs.AccessConnector;
 public class Colonne {
 
 	IntegerProperty idCol;
-	StringProperty nom, type;
+	StringProperty nom, type, value;
 	BooleanProperty visible;
 	
 	public Colonne(int idColonne) {
@@ -26,6 +26,7 @@ public class Colonne {
 		nom = new SimpleStringProperty();
 		type = new SimpleStringProperty();
 		visible = new SimpleBooleanProperty();
+		value = new SimpleStringProperty();
 		try {
 			createColonne();
 		} catch (DefaultException e) {
@@ -42,6 +43,7 @@ public class Colonne {
 				visible.set(cursor.getCurrentRow().getBoolean("visible"));
 				nom.set(cursor.getCurrentRow().getString("nom"));
 				type.set(cursor.getCurrentRow().getString("type"));
+				value.set(cursor.getCurrentRow().getString("value"));
 			}
 
 		} catch (ClassCastException e) {
@@ -51,5 +53,37 @@ public class Colonne {
 		}
 		
 		AccessConnector.closeTable();
+	}
+
+	public StringProperty getValue() {
+		return value;
+	}
+
+	public void setValue(StringProperty value) {
+		this.value = value;
+	}
+
+	public StringProperty getNom() {
+		return nom;
+	}
+
+	public void setNom(StringProperty nom) {
+		this.nom = nom;
+	}
+
+	public StringProperty getType() {
+		return type;
+	}
+
+	public void setType(StringProperty type) {
+		this.type = type;
+	}
+
+	public BooleanProperty getVisible() {
+		return visible;
+	}
+
+	public void setVisible(BooleanProperty visible) {
+		this.visible = visible;
 	}
 }

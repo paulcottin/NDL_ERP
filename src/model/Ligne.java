@@ -9,22 +9,20 @@ import com.healthmarketscience.jackcess.CursorBuilder;
 import exceptions.DefaultException;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import model.connecteurs.AccessConnector;
 
 public class Ligne {
 
 	public static final String INT = "int", BOOLEAN = "boolean", STRING = "string", ACTION = "action";
 	
-	IntegerProperty idLigne, idCol;
-	StringProperty type, value;
+	IntegerProperty idLigne;
+	ObservableList<Colonne> colonnes;
 	
 	public Ligne(int idLigne) {
 		this.idLigne = new SimpleIntegerProperty(idLigne);
-		this.idCol = new SimpleIntegerProperty();
-		this.type = new SimpleStringProperty();
-		this.value = new SimpleStringProperty();
+		this.colonnes = FXCollections.observableArrayList();
 		try {
 			constructLigne();
 		} catch (DefaultException e) {
@@ -33,41 +31,18 @@ public class Ligne {
 	}
 	
 	private void constructLigne() throws DefaultException {
-		//On récupère le type de la valeur
+		//On crée la liste de colonnes
 		AccessConnector.openTable("lignes");
 		try {
-			//On récupère l'id de la colonne
+			
 			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
 			Column col = AccessConnector.table.getColumn("id_ligne");
-			cursor.findFirstRow(col, idLigne.get());
-			idCol.set(cursor.getCurrentRow().getInt("id_colonne"));
-			value.set(cursor.getCurrentRow().getString("valeur"));
-			
-			//On récupère le type
-			AccessConnector.closeTable();
-			AccessConnector.openTable("colonnes");
-			cursor = CursorBuilder.createCursor(AccessConnector.table);
-			col = AccessConnector.table.getColumn("id_colonne");
-			cursor.findFirstRow(col, idCol.get());
-			String type = cursor.getCurrentRow().getString("type");
-			
-			switch (type) {
-			case INT:
-				this.type.set(INT);
-				break;
-			case STRING:
-				this.type.set(STRING);
-				break;
-			case BOOLEAN:
-				this.type.set(BOOLEAN);
-				break;
-			case ACTION:
-				this.type.set(ACTION);
-				break;
-
-			default:
-				break;
+			while(cursor.findNextRow(col, idLigne.get())) {
+				int id = cursor.getCurrentRow().getInt("id_colonne");
+				colonnes.add(new Colonne(id));
+				AccessConnector.openTable("lignes");
 			}
+			
 		} catch (ClassCastException e) {
 			throw new DefaultException("Erreur de conversion en entier");
 		} catch (IOException e) {
@@ -84,19 +59,11 @@ public class Ligne {
 		this.idLigne.set(idLigne);
 	}
 
-	public String getType() {
-		return type.get();
+	public ObservableList<Colonne> getColonnes() {
+		return colonnes;
 	}
 
-	public void setType(String type) {
-		this.type.set(type);
-	}
-
-	public String getValue() {
-		return value.get();
-	}
-
-	public void setValue(String value) {
-		this.value.set(value);
+	public void setColonnes(ObservableList<Colonne> colonnes) {
+		this.colonnes = colonnes;
 	}
 }
