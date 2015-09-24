@@ -1,6 +1,11 @@
 package model;
 
 import java.io.File;
+import java.io.IOException;
+
+import com.healthmarketscience.jackcess.Column;
+import com.healthmarketscience.jackcess.Cursor;
+import com.healthmarketscience.jackcess.CursorBuilder;
 
 import exceptions.DefaultException;
 import javafx.application.Application;
@@ -12,6 +17,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import model.connecteurs.AccessConnector;
 import model.interfaces.Table;
+import model.interfaces.TableType;
 import model.tables.Inscription;
 import vues.Fenetre;
 
@@ -28,7 +34,25 @@ public class ERP extends Application{
 			e.printMessage();
 		}
 		
-		tables.add(new Inscription(1));
+		try {
+			initTables();
+		} catch (DefaultException e) {
+			e.printMessage();
+		}
+	}
+	
+	private void initTables() throws DefaultException {
+		AccessConnector.openTable("tables");
+		try {
+			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
+			while (cursor.getNextRow() != null) {
+				//TODO : Instanciation automatique en fonction du type de table
+				if (cursor.getCurrentRow().getString("type").equals(TableType.INSCRIPTION))
+					tables.add(new Inscription(cursor.getCurrentRow().getInt("id_table")));
+			}
+		} catch (IOException e) {
+			throw new DefaultException("Erreur de lecture de la table \""+AccessConnector.table.getName()+"\"");
+		}
 	}
 	
 	@Override

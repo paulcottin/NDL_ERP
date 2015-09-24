@@ -9,7 +9,7 @@ import model.tables.Inscription;
 public class Fenetre extends Scene{
 
 	private ERP erp;
-	private Parent root;
+	private Parent root, center, left, right, bottom;
 	
 	public Fenetre(ERP erp, Parent root, int x, int y) {
 		super(root, x, y);
@@ -18,7 +18,11 @@ public class Fenetre extends Scene{
 		createWin();
 	}
 	
-	private void createWin() {
-		((BorderPane) root).setCenter(new VueInscription((Inscription) erp.getTables().get(0)));
+	private void createWin() {	
+		
+		// grille centrale
+		center = new VueInscription(erp);
+		((BorderPane) root).setLeft(left);
+		((BorderPane) root).setCenter(center);
 	}
 }

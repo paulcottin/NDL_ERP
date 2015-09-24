@@ -42,6 +42,10 @@ public class Inscription extends Table{
 			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
 		}
 	}
+	
+	public String toString() {
+		return nom;
+	}
 
 	public ObservableList<String> getUrls() {
 		return urls;
