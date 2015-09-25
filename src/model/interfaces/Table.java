@@ -2,6 +2,8 @@ package model.interfaces;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.healthmarketscience.jackcess.Column;
 import com.healthmarketscience.jackcess.Cursor;
@@ -13,12 +15,23 @@ import model.Ligne;
 import model.connecteurs.AccessConnector;
 
 public abstract class Table {
-	
+
 	protected int idTable;
 	protected String nom, famille, type;
 	protected ObservableList<Ligne> lignes;
 	protected ObservableList<Option> options;
 	protected boolean constructed;
+
+	public Table() {
+		lignes = FXCollections.observableArrayList();
+		options = FXCollections.observableArrayList();
+		constructed = false;
+		try {
+			createTable();
+		} catch (DefaultException e) {
+			e.printMessage();
+		}
+	}
 
 	public Table(int idTable) {
 		this.idTable = idTable;
@@ -31,11 +44,10 @@ public abstract class Table {
 			e.printMessage();
 		}
 	}
-	
+
 	private void initTable() throws DefaultException {
 		AccessConnector.openTable("tables");
 		try {
-			
 			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
 			Column col = AccessConnector.table.getColumn("id_table");
 			cursor.findFirstRow(col, idTable);
@@ -47,12 +59,12 @@ public abstract class Table {
 		} finally {
 			AccessConnector.closeTable();
 		}
-		
+
 	}
 
 	public void construct() throws DefaultException {
 		AccessConnector.openTable("donnees");
-		
+
 		try {
 			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
 			Column col = AccessConnector.table.getColumn("id_table");
@@ -63,16 +75,48 @@ public abstract class Table {
 					ids.add(idLigne);
 			}
 			for (Integer integer : ids) 
-				lignes.add(new Ligne(integer));
-			
+				lignes.add(new Ligne(integer, idTable));
+
 		} catch (ClassCastException e) {
 			throw new DefaultException("Erreur de conversion en entier");
 		} catch (IOException e) {
 			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
 		}
-		
+
 		AccessConnector.closeTable();
 		constructed = true;
+	}
+
+	protected void createTable() throws DefaultException {
+		AccessConnector.openTable("tables");
+		try {
+			Map<String, Object> map = new LinkedHashMap<String, Object>();
+			AccessConnector.table.addRowFromMap(map);
+			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
+			while (cursor.getNextRow() != null) {
+				idTable = cursor.getCurrentRow().getInt("id_table");
+			}
+			System.out.println("new id : "+idTable);
+		} catch (IOException e) {
+			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
+		}
+	}
+
+	protected void update(String colonneName, String value) throws DefaultException {
+		System.out.println(idTable+", update "+colonneName+" with "+value);
+		AccessConnector.openTable("tables");
+		try {
+			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
+			Column idCol = AccessConnector.table.getColumn("id_table");
+			Column col = AccessConnector.table.getColumn(colonneName);
+			cursor.findFirstRow(idCol, idTable);
+			cursor.setCurrentRowValue(col, value);
+		} catch (IOException e) {
+			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
+		} finally {
+			AccessConnector.closeTable();
+		}
+
 	}
 
 	public String getNom() {
@@ -80,7 +124,12 @@ public abstract class Table {
 	}
 
 	public void setNom(String nom) {
-		this.nom = nom;
+		try {
+			this.nom = nom;
+			update("nom_table", nom);
+		} catch (DefaultException e) {
+			e.printMessage();
+		}
 	}
 
 	public String getFamille() {
@@ -88,7 +137,12 @@ public abstract class Table {
 	}
 
 	public void setFamille(String famille) {
-		this.famille = famille;
+		try {
+			this.famille = famille;
+			update("famille", famille);
+		} catch (DefaultException e) {
+			e.printMessage();
+		}
 	}
 
 	public ObservableList<Option> getOptions() {
@@ -112,7 +166,12 @@ public abstract class Table {
 	}
 
 	public void setType(String type) {
-		this.type = type;
+		try {
+			this.type = type;
+			update("type", type);
+		} catch (DefaultException e) {
+			e.printMessage();
+		}
 	}
 
 	public boolean isConstructed() {

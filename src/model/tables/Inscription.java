@@ -16,6 +16,11 @@ public class Inscription extends Table{
 
 	ObservableList<String> urls;
 	
+	public Inscription() {
+		super();
+		urls = FXCollections.observableArrayList();
+	}
+	
 	public Inscription(int idTable) {
 		super(idTable);
 		urls = FXCollections.observableArrayList();

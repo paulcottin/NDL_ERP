@@ -1,7 +1,10 @@
 package vues;
 
+import controlleurs.CreerFormulaire;
+import javafx.event.ActionEvent;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import model.ERP;
 import model.tables.Inscription;
@@ -19,10 +22,15 @@ public class Fenetre extends Scene{
 	}
 	
 	private void createWin() {	
+		//Bouton temporaire
+		Button b = new Button("Ajout form");
+		b.addEventHandler(ActionEvent.ACTION, new CreerFormulaire(erp));
+		
 		
 		// grille centrale
 		center = new VueInscription(erp);
 		((BorderPane) root).setLeft(left);
 		((BorderPane) root).setCenter(center);
+		((BorderPane) root).setBottom(b);
 	}
 }

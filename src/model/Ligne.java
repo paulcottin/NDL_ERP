@@ -2,6 +2,8 @@ package model;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.healthmarketscience.jackcess.Column;
 import com.healthmarketscience.jackcess.Cursor;
@@ -20,10 +22,20 @@ public class Ligne {
 
 	ObservableList<Donnee> data;
 	ArrayList<String> colonnesNames;
-	IntegerProperty idLigne;
+	int idLigne;
+	int idTable;
 	
-	public Ligne(int idLigne) throws DefaultException {
-		this.idLigne = new SimpleIntegerProperty(idLigne);
+	public Ligne(int idTable) throws DefaultException {
+		data = FXCollections.observableArrayList();
+		colonnesNames = new ArrayList<String>();
+		this.idTable = idTable;
+		createLigne();
+	}
+	
+	
+	public Ligne(int idLigne, int idTable) throws DefaultException {
+		this.idLigne = idLigne;
+		this.idTable = idTable;
 		data = FXCollections.observableArrayList();
 		colonnesNames = new ArrayList<String>();
 		
@@ -35,14 +47,41 @@ public class Ligne {
 		try {
 			Cursor cursorLigne = CursorBuilder.createCursor(AccessConnector.table);
 			Column colLigne = AccessConnector.table.getColumn("id_ligne");
-			while(cursorLigne.findNextRow(colLigne, this.idLigne.get())) {
+			while(cursorLigne.findNextRow(colLigne, this.idLigne)) {
 				if (!colonnesNames.contains(cursorLigne.getCurrentRow().getString("nom_colonne")))
 					colonnesNames.add(cursorLigne.getCurrentRow().getString("nom_colonne"));
-				data.add(new Donnee(cursorLigne.getCurrentRow().getInt("id")));
+				data.add(new Donnee(cursorLigne.getCurrentRow().getInt("id"), idLigne, idTable));
 			}
 		} catch (IOException e) {
 			throw new DefaultException("Erreur lors du parcous de la table \""+AccessConnector.table.getName()+"\"");
 		}
+	}
+	
+	private void createLigne() throws DefaultException {
+		AccessConnector.openTable("donnees");
+		
+		Map<String, Object> map = new LinkedHashMap<String, Object>();
+		try {
+			
+			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
+			while (cursor.getNextRow() != null) {
+				idLigne = cursor.getCurrentRow().getInt("id_ligne");
+			}
+			AccessConnector.table.addRowFromMap(map);
+		} catch (IOException e) {
+			throw new DefaultException("Erreur de lecture de la table \""+AccessConnector.table.getName()+"\"");
+		}
+		
+	}
+	
+	public void add(String nomColonne, String value) throws DefaultException {
+		Donnee d = new Donnee(idLigne, idTable);
+		d.setNomColonne(nomColonne);
+		d.setValue(new SimpleStringProperty(value));
+		d.setVisible(true);
+		//TODO donner un type de manière dynamique
+		d.setType(Donnee.STRING);
+		d.setIdTable(idTable);
 	}
 	
 	public StringProperty getDonneeValue(String colonneName) {
@@ -67,5 +106,15 @@ public class Ligne {
 
 	public void setColonnesNames(ArrayList<String> colonnesNames) {
 		this.colonnesNames = colonnesNames;
+	}
+
+
+	public int getIdTable() {
+		return idTable;
+	}
+
+
+	public void setIdTable(int idTable) {
+		this.idTable = idTable;
 	}
 }
