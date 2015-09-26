@@ -23,7 +23,6 @@ public class AccessConnector {
 	}
 
 	public void queryLignes() throws MyException {
-		// TODO Auto-generated method stub
 		
 	}
 

@@ -59,15 +59,13 @@ public class Ligne {
 	
 	private void createLigne() throws DefaultException {
 		AccessConnector.openTable("donnees");
-		
-		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		try {
 			
 			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
 			while (cursor.getNextRow() != null) {
 				idLigne = cursor.getCurrentRow().getInt("id_ligne");
 			}
-			AccessConnector.table.addRowFromMap(map);
+			idLigne++;
 		} catch (IOException e) {
 			throw new DefaultException("Erreur de lecture de la table \""+AccessConnector.table.getName()+"\"");
 		}

@@ -74,6 +74,7 @@ public class GoogleConnector {
 		
 		Iterator<CSVRecord> iter = records.iterator();
 		int index = 0;
+		iter.next();
 		while (iter.hasNext()) {
 			CSVRecord record = iter.next();
 			lignes.add(FXCollections.observableArrayList());
@@ -82,7 +83,6 @@ public class GoogleConnector {
 			}
 			index++;
 		}
-		System.out.println("list size : "+lignes.size()+" ; index : "+index);
 	}
 
 	private String[] updateHeader(String header) {

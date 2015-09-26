@@ -97,23 +97,26 @@ public class Donnee {
 		try {
 			AccessConnector.table.addRowFromMap(map);
 			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
+			Column col = AccessConnector.table.getColumn("id_table");
+			Column colLigne = AccessConnector.table.getColumn("id_ligne");
 			while (cursor.getNextRow() != null) {
 				id = cursor.getCurrentRow().getInt("id");
 			}
+			cursor.getPreviousRow();
+			cursor.setCurrentRowValue(col, idTable);
+			cursor.setCurrentRowValue(colLigne, idLigne);
 		} catch (IOException e) {
 			throw new DefaultException("Erreur de lecture de la table \""+AccessConnector.table.getName()+"\"");
 		}
 	}
 	
 	private void update(String colonneName, Object value) throws DefaultException{
-		System.out.println(idTable+", update "+colonneName+" with "+value.toString());
 		AccessConnector.openTable("donnees");
 		try {
 			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			Column idCol = AccessConnector.table.getColumn("id_table");
+			Column idCol = AccessConnector.table.getColumn("id");
 			Column col = AccessConnector.table.getColumn(colonneName);
-			System.out.println("colonne name : "+col.getName()+"; value : "+value.toString());
-			cursor.findFirstRow(idCol, idTable);
+			cursor.findFirstRow(idCol, id);
 			//Ne trouves pas la row avec cette idTable car elle n'existe pas dans la table donnees 
 			cursor.setCurrentRowValue(col, value);
 		} catch (IOException e) {

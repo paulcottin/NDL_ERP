@@ -129,11 +129,12 @@ public class ERP extends Application{
 			e.printMessage();
 		}
 		for (ObservableList<Pair<String, String>> list : google.getLignes()) {
-			Ligne l = new Ligne(lastTableID);
+			Ligne l = new Ligne(ins.getIdTable());
 			for (Pair<String, String> pair : list) {
 				l.add(pair.getKey(), pair.getValue());
 			}
 		}
+		System.out.println("done");
 //			f.createTable();
 //			progressBar = f.getProgressBar();
 //			forms.add(f);

@@ -96,14 +96,12 @@ public abstract class Table {
 			while (cursor.getNextRow() != null) {
 				idTable = cursor.getCurrentRow().getInt("id_table");
 			}
-			System.out.println("new id : "+idTable);
 		} catch (IOException e) {
 			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
 		}
 	}
 
 	protected void update(String colonneName, String value) throws DefaultException {
-		System.out.println(idTable+", update "+colonneName+" with "+value);
 		AccessConnector.openTable("tables");
 		try {
 			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
@@ -180,6 +178,10 @@ public abstract class Table {
 
 	public void setConstructed(boolean constructed) {
 		this.constructed = constructed;
+	}
+
+	public int getIdTable() {
+		return idTable;
 	}
 
 }
