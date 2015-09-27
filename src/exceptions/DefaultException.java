@@ -22,9 +22,5 @@ public class DefaultException extends MyException{
 	public DefaultException(String message, Exception e) {
 		super(message, e);
 	}
-	
-	public void printMessage() {
-		displayMessage();
-	}
 
 }

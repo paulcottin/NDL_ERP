@@ -10,7 +10,7 @@ public abstract class MyException extends Exception{
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private String message;
+	protected String message;
 	
 	public MyException() {
 		super();
@@ -30,7 +30,7 @@ public abstract class MyException extends Exception{
 		this.message = message;
 	}
 	
-	protected void displayMessage(){
+	public void printMessage(){
 		Alert alert = new Alert(AlertType.ERROR);
 		alert.setTitle("Erreur !");
 		alert.setHeaderText(null);

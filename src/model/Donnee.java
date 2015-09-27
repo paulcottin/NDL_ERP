@@ -1,17 +1,16 @@
 package model;
 
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import com.healthmarketscience.jackcess.Column;
-import com.healthmarketscience.jackcess.Cursor;
-import com.healthmarketscience.jackcess.CursorBuilder;
-
+import java.util.ArrayList;
+import exceptions.BadRequestException;
 import exceptions.DefaultException;
+import exceptions.TableNotFoundException;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import model.connecteurs.AccessConnector;
+import model.interfaces.BaseDonnee;
+import utils.BddColonne;
+import utils.BddValue;
+import utils.ResultSet;
+import utils.WhereCondition;
 
 public class Donnee {
 
@@ -21,8 +20,10 @@ public class Donnee {
 	StringProperty value;
 	String nomColonne, type;
 	boolean visible;
+	BaseDonnee bdd;
 
-	public Donnee(int idLigne, int idTable) {
+	public Donnee(BaseDonnee bdd, int idLigne, int idTable) {
+		this.bdd = bdd;
 		this.idLigne = idLigne;
 		this.idTable = idTable;
 		nomColonne = null;
@@ -31,99 +32,77 @@ public class Donnee {
 		value = new SimpleStringProperty();
 		try {
 			createDonnee();
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
-	
-	public Donnee(int id, int idLigne, int idTable) {
+
+	public Donnee(BaseDonnee bdd, int id, int idLigne, int idTable) {
 		this.id = id;
+		this.bdd = bdd;
 		nomColonne = null;
 		type = null;
 		visible = true;
 		value = new SimpleStringProperty();
 		try {
 			constructLigne();
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
 
-	private void constructLigne() throws DefaultException {
-		//On crée la liste des données
-		AccessConnector.openTable("donnees");
-		try {
-			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			Column col = AccessConnector.table.getColumn("id");
-			while(cursor.findNextRow(col, id)) {
-				idLigne = cursor.getCurrentRow().getInt("id_ligne");
-				idTable = cursor.getCurrentRow().getInt("id_table");
-				nomColonne = cursor.getCurrentRow().getString("nom_colonne");
-				visible = cursor.getCurrentRow().getBoolean("visible");
-				value.set(cursor.getCurrentRow().getString("valeur"));
+	private void constructLigne() throws DefaultException, TableNotFoundException, BadRequestException {
+		bdd.select(new BddColonne("donnees", "id_ligne"), 
+				new BddColonne("donnees", "id_table"), 
+				new BddColonne("donnees", "nom_colonne"), 
+				new BddColonne("donnees", "visible"), 
+				new BddColonne("donnees", "valeur"), 
+				new BddColonne("donnees", "type"));
+		bdd.from("donnees");
+		bdd.where(new WhereCondition("donnees", "id", BaseDonnee.EGAL, id));
 
-				String accessType = cursor.getCurrentRow().getString("type");
-				switch (accessType) {
-				case INT:
-					this.type = INT;
-					break;
-				case STRING:
-					this.type = STRING;
-					break;
-				case BOOLEAN:
-					this.type = BOOLEAN;
-					break;
-				case ACTION:
-					this.type = ACTION;
-					break;
+		ResultSet res = bdd.execute().get(0);
 
-				default:
-					throw new DefaultException("Type \""+accessType+"\"inconnu !");
-				}
-			}
+		idLigne = (int) res.get("id_ligne");
+		idTable = (int) res.get("id_table");
+		nomColonne  = (String) res.get("nom_colonne");
+		visible = (boolean) res.get("visible");
+		value.set((String) res.get("valeur"));
 
-		} catch (ClassCastException e) {
-			throw new DefaultException("Erreur de conversion en entier");
-		} catch (IOException e) {
-			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
+		String accessType = (String) res.get("type");
+		switch (accessType) {
+		case INT:
+			this.type = INT;
+			break;
+		case STRING:
+			this.type = STRING;
+			break;
+		case BOOLEAN:
+			this.type = BOOLEAN;
+			break;
+		case ACTION:
+			this.type = ACTION;
+			break;
+
+		default:
+			throw new DefaultException("Type \""+accessType+"\"inconnu !");
 		}
-		AccessConnector.closeTable();
+
 	}
-	
-	private void createDonnee() throws DefaultException {
-		AccessConnector.openTable("donnees");
+
+	private void createDonnee() throws DefaultException, BadRequestException, TableNotFoundException {
+		ArrayList<BddValue> insert = new ArrayList<BddValue>();
+		insert.add(new BddValue("id_table", idTable));
+		insert.add(new BddValue("id_ligne", idLigne));
 		
-		Map<String, Object> map = new LinkedHashMap<String, Object>();
-		try {
-			AccessConnector.table.addRowFromMap(map);
-			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			Column col = AccessConnector.table.getColumn("id_table");
-			Column colLigne = AccessConnector.table.getColumn("id_ligne");
-			while (cursor.getNextRow() != null) {
-				id = cursor.getCurrentRow().getInt("id");
-			}
-			cursor.getPreviousRow();
-			cursor.setCurrentRowValue(col, idTable);
-			cursor.setCurrentRowValue(colLigne, idLigne);
-		} catch (IOException e) {
-			throw new DefaultException("Erreur de lecture de la table \""+AccessConnector.table.getName()+"\"");
-		}
+		bdd.insert("donnees", insert);
+		bdd.execute();
 	}
-	
-	private void update(String colonneName, Object value) throws DefaultException{
-		AccessConnector.openTable("donnees");
-		try {
-			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			Column idCol = AccessConnector.table.getColumn("id");
-			Column col = AccessConnector.table.getColumn(colonneName);
-			cursor.findFirstRow(idCol, id);
-			//Ne trouves pas la row avec cette idTable car elle n'existe pas dans la table donnees 
-			cursor.setCurrentRowValue(col, value);
-		} catch (IOException e) {
-			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
-		} finally {
-			AccessConnector.closeTable();
-		}
+
+	private void update(String colonneName, Object value) throws DefaultException, BadRequestException, TableNotFoundException{
+		bdd.update(new BddColonne("donnees", colonneName), value);
+		bdd.where(new WhereCondition("donnees", colonneName, BaseDonnee.EGAL, id));
+		bdd.execute();
 	}
 
 	public StringProperty getValue() {
@@ -134,7 +113,7 @@ public class Donnee {
 		this.value = value;
 		try {
 			update("valeur", value.get());
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
@@ -147,7 +126,7 @@ public class Donnee {
 		this.nomColonne = nomColonne;
 		try {
 			update("nom_colonne", nomColonne);
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
@@ -160,7 +139,7 @@ public class Donnee {
 		this.type = type;
 		try {
 			update("type", type);
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
@@ -173,7 +152,7 @@ public class Donnee {
 		this.visible = visible;
 		try {
 			update("visible", visible);
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
@@ -190,7 +169,7 @@ public class Donnee {
 		this.idLigne = idLigne;
 		try {
 			update("id_ligne", idLigne);
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
@@ -203,9 +182,9 @@ public class Donnee {
 		this.idTable = idTable;
 		try {
 			update("id_table", idTable);
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
-	
+
 }

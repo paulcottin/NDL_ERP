@@ -1,31 +1,28 @@
 package model;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import com.healthmarketscience.jackcess.Column;
-import com.healthmarketscience.jackcess.Cursor;
-import com.healthmarketscience.jackcess.CursorBuilder;
-
+import exceptions.BadRequestException;
 import exceptions.DefaultException;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
+import exceptions.TableNotFoundException;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import model.connecteurs.AccessConnector;
+import model.interfaces.BaseDonnee;
+import utils.BddColonne;
+import utils.ResultSet;
+import utils.WhereCondition;
 
 public class Ligne {
 
 	ObservableList<Donnee> data;
 	ArrayList<String> colonnesNames;
+	BaseDonnee bdd;
 	int idLigne;
 	int idTable;
 	
-	public Ligne(int idTable) throws DefaultException {
+	public Ligne(BaseDonnee bdd, int idTable) throws DefaultException, TableNotFoundException, BadRequestException {
+		this.bdd = bdd;
 		data = FXCollections.observableArrayList();
 		colonnesNames = new ArrayList<String>();
 		this.idTable = idTable;
@@ -33,7 +30,8 @@ public class Ligne {
 	}
 	
 	
-	public Ligne(int idLigne, int idTable) throws DefaultException {
+	public Ligne(BaseDonnee bdd, int idLigne, int idTable) throws DefaultException, TableNotFoundException, BadRequestException {
+		this.bdd = bdd;
 		this.idLigne = idLigne;
 		this.idTable = idTable;
 		data = FXCollections.observableArrayList();
@@ -42,38 +40,36 @@ public class Ligne {
 		constructLigne();
 	}
 	
-	private void constructLigne() throws DefaultException {
-		AccessConnector.openTable("donnees");
-		try {
-			Cursor cursorLigne = CursorBuilder.createCursor(AccessConnector.table);
-			Column colLigne = AccessConnector.table.getColumn("id_ligne");
-			while(cursorLigne.findNextRow(colLigne, this.idLigne)) {
-				if (!colonnesNames.contains(cursorLigne.getCurrentRow().getString("nom_colonne")))
-					colonnesNames.add(cursorLigne.getCurrentRow().getString("nom_colonne"));
-				data.add(new Donnee(cursorLigne.getCurrentRow().getInt("id"), idLigne, idTable));
-			}
-		} catch (IOException e) {
-			throw new DefaultException("Erreur lors du parcous de la table \""+AccessConnector.table.getName()+"\"");
+	private void constructLigne() throws DefaultException, BadRequestException, TableNotFoundException {
+		bdd.select(new BddColonne("donnees", "id"),
+				new BddColonne("donnees", "nom_colonne"));
+		bdd.from("donnees");
+		bdd.where(new WhereCondition("donnees", "id_ligne", BaseDonnee.EGAL, idLigne));
+		
+		for (ResultSet map: bdd.execute()) {
+			if (!colonnesNames.contains((String) map.get("nom_colonne")))
+				colonnesNames.add((String) map.get("nom_colonne"));
+			data.add(new Donnee(bdd, (int) map.get("id"), idLigne, idTable));
 		}
 	}
 	
-	private void createLigne() throws DefaultException {
-		AccessConnector.openTable("donnees");
-		try {
-			
-			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			while (cursor.getNextRow() != null) {
-				idLigne = cursor.getCurrentRow().getInt("id_ligne");
-			}
-			idLigne++;
-		} catch (IOException e) {
-			throw new DefaultException("Erreur de lecture de la table \""+AccessConnector.table.getName()+"\"");
-		}
+	private void createLigne() throws DefaultException, BadRequestException, TableNotFoundException {
+		bdd.select(new BddColonne("donnees", "id_ligne"));
+		bdd.from("donnees");
 		
+		System.out.println("add ligne");
+		ArrayList<ResultSet> res = bdd.execute();
+		if ((int) res.size() > 0)
+			idLigne = (int) res.get(res.size()-1).get("id_ligne");
+		else
+			idLigne = 0;
+		idLigne++;		
+		System.out.println("id ligne : "+idLigne);
 	}
 	
 	public void add(String nomColonne, String value) throws DefaultException {
-		Donnee d = new Donnee(idLigne, idTable);
+		System.out.println("add "+nomColonne+" : "+value);
+		Donnee d = new Donnee(bdd, idLigne, idTable);
 		d.setNomColonne(nomColonne);
 		d.setValue(new SimpleStringProperty(value));
 		d.setVisible(true);

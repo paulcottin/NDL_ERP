@@ -1,14 +1,14 @@
 package model;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.Optional;
 
-import com.healthmarketscience.jackcess.Cursor;
-import com.healthmarketscience.jackcess.CursorBuilder;
-
+import exceptions.BadRequestException;
+import exceptions.ConnexionException;
 import exceptions.DefaultException;
-import exceptions.MyException;
+import exceptions.IdentificationException;
+import exceptions.TableNotFoundException;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -26,51 +26,52 @@ import javafx.stage.Stage;
 import javafx.util.Pair;
 import model.connecteurs.AccessConnector;
 import model.connecteurs.GoogleConnector;
+import model.interfaces.BaseDonnee;
 import model.interfaces.Table;
 import model.interfaces.TableType;
 import model.tables.Inscription;
+import utils.BddColonne;
+import utils.ResultSet;
+import utils.WhereCondition;
 import vues.Fenetre;
 
 public class ERP extends Application{
 
 	ObservableList<Table> tables;
 	GoogleConnector google;
+	AccessConnector bdd;
 	int lastTableID;
 
-	public ERP() {
+	public ERP() throws DefaultException {
 		this.tables = FXCollections.observableArrayList();
-		AccessConnector.databaseFile = new File("C:\\Users\\polob\\Documents\\bdd_erp.accdb");
-		
+		bdd = new AccessConnector();
+		google = new GoogleConnector();
 		try {
-			AccessConnector.connect();
-			google = new GoogleConnector();
-		} catch (DefaultException e) {
-			e.printMessage();
+			bdd.connect(new File("C:\\Users\\polob\\Documents\\bdd_erp.accdb"), "");
+		} catch (IdentificationException | ConnexionException e1) {
+			e1.printMessage();
+		} catch (FileNotFoundException e) {
+			throw new DefaultException("Fichier de connexion à la base de donnée non trouvé !");
 		}
 
 		try {
 			initTables();
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
 
-	private void initTables() throws DefaultException {
-		AccessConnector.openTable("tables");
-		try {
-			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			while (cursor.getNextRow() != null) {
-				//TODO : Instanciation automatique en fonction du type de table
-				if (cursor.getCurrentRow().getString("type").equals(TableType.INSCRIPTION))
-					tables.add(new Inscription(cursor.getCurrentRow().getInt("id_table")));
-				lastTableID = cursor.getCurrentRow().getInt("id_table");
-			}
-		} catch (IOException e) {
-			throw new DefaultException("Erreur de lecture de la table \""+AccessConnector.table.getName()+"\"");
+	private void initTables() throws DefaultException, BadRequestException, TableNotFoundException {
+		bdd.select(new BddColonne("tables", "id_table"), new BddColonne("tables", "type"));
+		bdd.from("tables");
+		bdd.where(new WhereCondition("tables", "type", BaseDonnee.EGAL, TableType.INSCRIPTION));
+		for (ResultSet map: bdd.execute()) {
+			//TODO : Instanciation automatique en fonction du type de table
+			tables.add(new Inscription(bdd, (int) map.get("id_table")));
 		}
 	}
 
-	public void createTableFromGoogleSheet() throws DefaultException {
+	public void createTableFromGoogleSheet() throws DefaultException, TableNotFoundException, BadRequestException {
 		//Demande de l'URL et du nom de la table
 		Dialog<Pair<String, String>> bddDialog = new Dialog<>();
 		bddDialog.setTitle("Connexion à la base de donnée");
@@ -118,7 +119,7 @@ public class ERP extends Application{
 			}
 		}
 		google.setGoogleID(tab[index]);
-		Table ins = new Inscription();
+		Table ins = new Inscription(bdd);
 		ins.setType("inscription");
 		ins.setFamille("inscription");
 		ins.setNom(nom);
@@ -129,7 +130,7 @@ public class ERP extends Application{
 			e.printMessage();
 		}
 		for (ObservableList<Pair<String, String>> list : google.getLignes()) {
-			Ligne l = new Ligne(ins.getIdTable());
+			Ligne l = new Ligne(bdd, ins.getIdTable());
 			for (Pair<String, String> pair : list) {
 				l.add(pair.getKey(), pair.getValue());
 			}

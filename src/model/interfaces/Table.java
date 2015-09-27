@@ -1,18 +1,22 @@
 package model.interfaces;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
-import com.healthmarketscience.jackcess.Column;
-import com.healthmarketscience.jackcess.Cursor;
-import com.healthmarketscience.jackcess.CursorBuilder;
+import exceptions.BadRequestException;
 import exceptions.DefaultException;
+import exceptions.TableNotFoundException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.util.Pair;
 import model.Ligne;
 import model.connecteurs.AccessConnector;
+import utils.BddColonne;
+import utils.BddValue;
+import utils.ResultSet;
+import utils.Trio;
+import utils.WhereCondition;
 
 public abstract class Table {
 
@@ -21,100 +25,86 @@ public abstract class Table {
 	protected ObservableList<Ligne> lignes;
 	protected ObservableList<Option> options;
 	protected boolean constructed;
+	protected BaseDonnee bdd;
 
-	public Table() {
+	public Table(BaseDonnee accessConnector) {
+		this.bdd = accessConnector;
 		lignes = FXCollections.observableArrayList();
 		options = FXCollections.observableArrayList();
 		constructed = false;
 		try {
 			createTable();
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
 
-	public Table(int idTable) {
+	public Table(BaseDonnee accessConnector, int idTable) {
+		this.bdd = accessConnector;
 		this.idTable = idTable;
 		lignes = FXCollections.observableArrayList();
 		options = FXCollections.observableArrayList();
 		constructed = false;
 		try {
 			initTable();
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
 
-	private void initTable() throws DefaultException {
-		AccessConnector.openTable("tables");
-		try {
-			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			Column col = AccessConnector.table.getColumn("id_table");
-			cursor.findFirstRow(col, idTable);
-			nom = cursor.getCurrentRow().getString("nom_table");
-			famille = cursor.getCurrentRow().getString("famille");
-			type = cursor.getCurrentRow().getString("type");
-		} catch (IOException e) {
-			throw new DefaultException("Erreur lors de la lecture de la table \"tables\"");
-		} finally {
-			AccessConnector.closeTable();
-		}
+	@SuppressWarnings("unchecked")
+	private void initTable() throws DefaultException, TableNotFoundException, BadRequestException {
+		bdd.select(new BddColonne("tables", "nom_table"), 
+				new BddColonne("tables", "famille"), 
+				new BddColonne("tables", "type"));
+		bdd.from("tables");
+		bdd.where(new WhereCondition("tables", "id_table", BaseDonnee.EGAL, idTable));
 
+		ResultSet res = bdd.execute().get(0);
+		nom = (String) res.get("nom_table");
+		famille = (String) res.get("famille");
+		type = (String) res.get("type"); 
 	}
 
-	public void construct() throws DefaultException {
-		AccessConnector.openTable("donnees");
-
+	@SuppressWarnings("unchecked")
+	public void construct() throws DefaultException, TableNotFoundException, BadRequestException {
 		try {
-			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			Column col = AccessConnector.table.getColumn("id_table");
+			bdd.select(new BddColonne("donnees", "id_ligne"));
+			bdd.from("donnees");
+			bdd.where(new WhereCondition("donnees", "id_table", BaseDonnee.EGAL, idTable));
+
 			ArrayList<Integer> ids = new ArrayList<Integer>();
-			while(cursor.findNextRow(col, idTable)) {
-				int idLigne = cursor.getCurrentRow().getInt("id_ligne");
-				if (!ids.contains(idLigne))
-					ids.add(idLigne);
-			}
+			for (ResultSet m : bdd.execute()) 
+				if (!ids.contains(m.get("id_ligne")))
+					ids.add((Integer) m.get("id_ligne"));
+
 			for (Integer integer : ids) 
-				lignes.add(new Ligne(integer, idTable));
+				lignes.add(new Ligne(bdd, integer, idTable));
 
 		} catch (ClassCastException e) {
 			throw new DefaultException("Erreur de conversion en entier");
-		} catch (IOException e) {
-			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
 		}
-
-		AccessConnector.closeTable();
 		constructed = true;
 	}
 
-	protected void createTable() throws DefaultException {
-		AccessConnector.openTable("tables");
-		try {
-			Map<String, Object> map = new LinkedHashMap<String, Object>();
-			AccessConnector.table.addRowFromMap(map);
-			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			while (cursor.getNextRow() != null) {
-				idTable = cursor.getCurrentRow().getInt("id_table");
-			}
-		} catch (IOException e) {
-			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
+	@SuppressWarnings("unchecked")
+	protected void createTable() throws DefaultException, TableNotFoundException, BadRequestException {
+		bdd.insert("tables", new ArrayList<BddValue>());
+
+		bdd.select(new BddColonne("tables", "id_table"));
+		bdd.from("tables");
+
+		int max = 0;
+		for (ResultSet map : bdd.execute()) {
+			if ((int) map.get("id_table") > max)
+				max = (int) map.get("id_table");
 		}
+		idTable = max;	
 	}
 
-	protected void update(String colonneName, String value) throws DefaultException {
-		AccessConnector.openTable("tables");
-		try {
-			Cursor cursor = CursorBuilder.createCursor(AccessConnector.table);
-			Column idCol = AccessConnector.table.getColumn("id_table");
-			Column col = AccessConnector.table.getColumn(colonneName);
-			cursor.findFirstRow(idCol, idTable);
-			cursor.setCurrentRowValue(col, value);
-		} catch (IOException e) {
-			throw new DefaultException("Erreur lors de la lecture de la table \""+AccessConnector.table.getName()+"\"");
-		} finally {
-			AccessConnector.closeTable();
-		}
-
+	protected void update(String colonneName, String value) throws DefaultException, BadRequestException, TableNotFoundException {
+		bdd.update(new BddColonne("tables", colonneName), value);
+		bdd.execute();
 	}
 
 	public String getNom() {
@@ -125,7 +115,7 @@ public abstract class Table {
 		try {
 			this.nom = nom;
 			update("nom_table", nom);
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
@@ -138,7 +128,7 @@ public abstract class Table {
 		try {
 			this.famille = famille;
 			update("famille", famille);
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
@@ -167,7 +157,7 @@ public abstract class Table {
 		try {
 			this.type = type;
 			update("type", type);
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}

@@ -1,6 +1,8 @@
 package controlleurs;
 
+import exceptions.BadRequestException;
 import exceptions.DefaultException;
+import exceptions.TableNotFoundException;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import model.ERP;
@@ -17,7 +19,7 @@ public class CreerFormulaire implements EventHandler<ActionEvent>{
 	public void handle(ActionEvent event) {
 		try {
 			erp.createTableFromGoogleSheet();
-		} catch (DefaultException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
