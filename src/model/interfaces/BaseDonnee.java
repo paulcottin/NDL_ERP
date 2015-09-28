@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import exceptions.BadRequestException;
+import exceptions.ColonneNotfoundException;
 import exceptions.ConnexionException;
 import exceptions.IdentificationException;
 import exceptions.TableNotFoundException;
@@ -40,6 +41,8 @@ public interface BaseDonnee {
 	public static final String UPDATE = "update";
 	public static final String DELETE = "delete";
 	public static final String INSERT = "insert";
+	public static final String ADD_COL = "add_col";
+	public static final String REMOVE_COL = "remove_col";
 
 	public void connect(String user, String mdp) throws IdentificationException, ConnexionException;
 	public void connect(File file, String mdp) throws IdentificationException, ConnexionException, FileNotFoundException;
@@ -51,6 +54,8 @@ public interface BaseDonnee {
 	public void delete(String inTableName) throws TableNotFoundException;
 	public void update(BddColonne tableNameColonneName, Object value) throws TableNotFoundException;
 	public void insert(String tableName, Collection<BddValue> values) throws TableNotFoundException;
+	public void addCol(String colonneName, String typeDonnees);
+	public void removeCol(String colonneName) throws ColonneNotfoundException;
 	
 	public ArrayList<ResultSet> execute() throws BadRequestException;
 }

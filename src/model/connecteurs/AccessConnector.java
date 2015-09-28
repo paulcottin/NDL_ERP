@@ -17,6 +17,7 @@ import com.healthmarketscience.jackcess.Row;
 import com.healthmarketscience.jackcess.Table;
 
 import exceptions.BadRequestException;
+import exceptions.ColonneNotfoundException;
 import exceptions.ConnexionException;
 import exceptions.IdentificationException;
 import exceptions.TableNotFoundException;
@@ -140,6 +141,16 @@ public class AccessConnector implements BaseDonnee{
 			colonnesValues.add(v);
 		}
 	}
+	
+	@Override
+	public void addCol(String colonneName, String typeDonnees) {
+		
+	}
+
+	@Override
+	public void removeCol(String colonneName) throws ColonneNotfoundException {
+		
+	}
 
 	@Override
 	public ArrayList<ResultSet> execute() throws BadRequestException {
@@ -149,7 +160,6 @@ public class AccessConnector implements BaseDonnee{
 		 **/
 		if (typeOperation.equals(BaseDonnee.SELECT)) {
 			//Remplissage de la liste de résultats
-			System.out.println("nombre de résultats : "+selectHelper().size());
 			for (Row row : selectHelper()) {
 				ResultSet map = new ResultSet();
 				for (BddColonne colonne : tablesColonnes) 
@@ -163,7 +173,6 @@ public class AccessConnector implements BaseDonnee{
 		else if (typeOperation.equals(BaseDonnee.UPDATE)) {
 			//Application des changements
 			for (Row row : selectByWhere()) {
-				System.out.println("replace "+tableColonne.getColonneName()+" by "+value.toString());
 				try {
 					row.replace(tableColonne.getColonneName(), value);
 					db.getTable(tableColonne.getTableName()).updateRow(row);
@@ -182,6 +191,7 @@ public class AccessConnector implements BaseDonnee{
 				for (BddValue pair : colonnesValues) {
 					map.put(pair.getColonne(), pair.getValue());
 				}
+				map.put("id", 0);
 				//TODO : Le problème vient de l'insertion via une map, ça ne doit pas être correct, 
 				//regarder la doc
 				table.addRowFromMap(map);
@@ -277,10 +287,10 @@ public class AccessConnector implements BaseDonnee{
 		ArrayList<Row> rowsSelected = new ArrayList<Row>();
 
 		try {
-			for (Trio<String,String,String,Object> trio : whereConditions) {
-				Cursor c = CursorBuilder.createCursor(db.getTable(trio.getTableName()));
-				Column col = db.getTable(trio.getTableName()).getColumn(trio.getColonneName());
-				while (c.findNextRow(col, trio.getValue())) {
+			for (WhereCondition where : whereConditions) {
+				Cursor c = CursorBuilder.createCursor(db.getTable(where.getTableName()));
+				Column col = db.getTable(where.getTableName()).getColumn(where.getColonneName());
+				while (c.findNextRow(col, where.getValue())) {
 					rowsSelected.add(c.getCurrentRow());					
 				}
 			}

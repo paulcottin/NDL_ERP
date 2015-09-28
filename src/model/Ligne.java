@@ -57,18 +57,15 @@ public class Ligne {
 		bdd.select(new BddColonne("donnees", "id_ligne"));
 		bdd.from("donnees");
 		
-		System.out.println("add ligne");
 		ArrayList<ResultSet> res = bdd.execute();
 		if ((int) res.size() > 0)
 			idLigne = (int) res.get(res.size()-1).get("id_ligne");
 		else
 			idLigne = 0;
 		idLigne++;		
-		System.out.println("id ligne : "+idLigne);
 	}
 	
 	public void add(String nomColonne, String value) throws DefaultException {
-		System.out.println("add "+nomColonne+" : "+value);
 		Donnee d = new Donnee(bdd, idLigne, idTable);
 		d.setNomColonne(nomColonne);
 		d.setValue(new SimpleStringProperty(value));

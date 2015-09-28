@@ -97,11 +97,16 @@ public class Donnee {
 		
 		bdd.insert("donnees", insert);
 		bdd.execute();
+		
+		bdd.select(new BddColonne("donnees", "id"));
+		bdd.from("donnees");
+		ArrayList<ResultSet> res = bdd.execute();
+		id = (int) res.get(res.size()-1).get("id");
 	}
 
 	private void update(String colonneName, Object value) throws DefaultException, BadRequestException, TableNotFoundException{
 		bdd.update(new BddColonne("donnees", colonneName), value);
-		bdd.where(new WhereCondition("donnees", colonneName, BaseDonnee.EGAL, id));
+		bdd.where(new WhereCondition("donnees", "id", BaseDonnee.EGAL, id));
 		bdd.execute();
 	}
 

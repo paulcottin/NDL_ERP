@@ -135,6 +135,7 @@ public class ERP extends Application{
 				l.add(pair.getKey(), pair.getValue());
 			}
 		}
+		tables.add(ins);
 		System.out.println("done");
 //			f.createTable();
 //			progressBar = f.getProgressBar();

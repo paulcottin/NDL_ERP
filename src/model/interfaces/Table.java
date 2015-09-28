@@ -52,7 +52,6 @@ public abstract class Table {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private void initTable() throws DefaultException, TableNotFoundException, BadRequestException {
 		bdd.select(new BddColonne("tables", "nom_table"), 
 				new BddColonne("tables", "famille"), 
@@ -66,7 +65,6 @@ public abstract class Table {
 		type = (String) res.get("type"); 
 	}
 
-	@SuppressWarnings("unchecked")
 	public void construct() throws DefaultException, TableNotFoundException, BadRequestException {
 		try {
 			bdd.select(new BddColonne("donnees", "id_ligne"));
@@ -87,9 +85,9 @@ public abstract class Table {
 		constructed = true;
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void createTable() throws DefaultException, TableNotFoundException, BadRequestException {
 		bdd.insert("tables", new ArrayList<BddValue>());
+		bdd.execute();
 
 		bdd.select(new BddColonne("tables", "id_table"));
 		bdd.from("tables");
@@ -104,6 +102,7 @@ public abstract class Table {
 
 	protected void update(String colonneName, String value) throws DefaultException, BadRequestException, TableNotFoundException {
 		bdd.update(new BddColonne("tables", colonneName), value);
+		bdd.where(new WhereCondition("tables", "id_table", BaseDonnee.EGAL, idTable));
 		bdd.execute();
 	}
 
