@@ -1,37 +1,34 @@
 package model.tables;
 
-import java.io.IOException;
-import java.util.HashMap;
-
-import com.healthmarketscience.jackcess.Column;
-import com.healthmarketscience.jackcess.Cursor;
-import com.healthmarketscience.jackcess.CursorBuilder;
+import java.util.ArrayList;
 
 import exceptions.BadRequestException;
 import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.util.Pair;
-import model.connecteurs.AccessConnector;
 import model.interfaces.BaseDonnee;
-import model.interfaces.Table;
+import model.interfaces.PhysicalTable;
+import model.interfaces.TableType;
+import model.interfaces.VirtualTable;
 import utils.BddColonne;
+import utils.BddValue;
 import utils.ResultSet;
-import utils.Trio;
 import utils.WhereCondition;
 
-public class Inscription extends Table{
+public class Inscription extends PhysicalTable {
 
 	ObservableList<String> urls;
 	
-	public Inscription(BaseDonnee bdd) {
-		super(bdd);
+	public Inscription(BaseDonnee bdd, ArrayList<BddValue> values) throws TableNotFoundException, DefaultException, BadRequestException {
+		super(bdd, values);
+		type = TableType.INSCRIPTION;
 		urls = FXCollections.observableArrayList();
 	}
 	
-	public Inscription(BaseDonnee bdd, int idTable) {
+	public Inscription(BaseDonnee bdd, int idTable) throws TableNotFoundException, DefaultException, BadRequestException {
 		super(bdd, idTable);
+		type = TableType.INSCRIPTION;
 		urls = FXCollections.observableArrayList();
 		try {
 			constructInscription();

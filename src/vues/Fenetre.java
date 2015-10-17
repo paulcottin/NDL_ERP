@@ -8,6 +8,8 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import model.ERP;
 import model.tables.Inscription;
+import vues.inscription.VueInscription;
+import vues.personne.VuePersonne;
 
 public class Fenetre extends Scene{
 
@@ -28,7 +30,8 @@ public class Fenetre extends Scene{
 		
 		
 		// grille centrale
-		center = new VueInscription(erp);
+//		center = new VueInscription(erp);
+		center = new VuePersonne(erp);
 		((BorderPane) root).setLeft(left);
 		((BorderPane) root).setCenter(center);
 		((BorderPane) root).setBottom(b);

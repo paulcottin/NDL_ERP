@@ -1,36 +1,46 @@
 package model.interfaces;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import exceptions.BadRequestException;
 import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.util.Pair;
 import model.Ligne;
-import model.connecteurs.AccessConnector;
+import model.LigneTest;
 import utils.BddColonne;
 import utils.BddValue;
 import utils.ResultSet;
-import utils.Trio;
 import utils.WhereCondition;
 
 public abstract class Table {
 
 	protected int idTable;
-	protected String nom, famille, type;
+	protected String nom, famille, type, idLigneName;
 	protected ObservableList<Ligne> lignes;
+	protected ObservableList<LigneTest> lignesTest;
 	protected ObservableList<Option> options;
+	protected ArrayList<BddValue> initialValues;
 	protected boolean constructed;
 	protected BaseDonnee bdd;
 
-	public Table(BaseDonnee accessConnector) {
-		this.bdd = accessConnector;
+	public Table(BaseDonnee bdd, ArrayList<BddValue> values) {
+		this.bdd = bdd;
 		lignes = FXCollections.observableArrayList();
+		lignesTest = FXCollections.observableArrayList();
 		options = FXCollections.observableArrayList();
+		this.initialValues = values;
+		for (BddValue bddValue : initialValues) {
+			if (bddValue.getColonne().equals("nom_table"))
+				nom = (String) bddValue.getValue();
+			else if (bddValue.getColonne().equals("famille"))
+				famille = (String) bddValue.getValue();
+			else if (bddValue.getColonne().equals("type"))
+				type = (String) bddValue.getValue();
+			else if (bddValue.getColonne().equals("id_ligne_name"))
+				idLigneName = (String) bddValue.getValue();
+		}
 		constructed = false;
 		try {
 			createTable();
@@ -43,6 +53,7 @@ public abstract class Table {
 		this.bdd = accessConnector;
 		this.idTable = idTable;
 		lignes = FXCollections.observableArrayList();
+		lignesTest = FXCollections.observableArrayList();
 		options = FXCollections.observableArrayList();
 		constructed = false;
 		try {
@@ -52,53 +63,11 @@ public abstract class Table {
 		}
 	}
 
-	private void initTable() throws DefaultException, TableNotFoundException, BadRequestException {
-		bdd.select(new BddColonne("tables", "nom_table"), 
-				new BddColonne("tables", "famille"), 
-				new BddColonne("tables", "type"));
-		bdd.from("tables");
-		bdd.where(new WhereCondition("tables", "id_table", BaseDonnee.EGAL, idTable));
-
-		ResultSet res = bdd.execute().get(0);
-		nom = (String) res.get("nom_table");
-		famille = (String) res.get("famille");
-		type = (String) res.get("type"); 
-	}
-
-	public void construct() throws DefaultException, TableNotFoundException, BadRequestException {
-		try {
-			bdd.select(new BddColonne("donnees", "id_ligne"));
-			bdd.from("donnees");
-			bdd.where(new WhereCondition("donnees", "id_table", BaseDonnee.EGAL, idTable));
-
-			ArrayList<Integer> ids = new ArrayList<Integer>();
-			for (ResultSet m : bdd.execute()) 
-				if (!ids.contains(m.get("id_ligne")))
-					ids.add((Integer) m.get("id_ligne"));
-
-			for (Integer integer : ids) 
-				lignes.add(new Ligne(bdd, integer, idTable));
-
-		} catch (ClassCastException e) {
-			throw new DefaultException("Erreur de conversion en entier");
-		}
-		constructed = true;
-	}
-
-	protected void createTable() throws DefaultException, TableNotFoundException, BadRequestException {
-		bdd.insert("tables", new ArrayList<BddValue>());
-		bdd.execute();
-
-		bdd.select(new BddColonne("tables", "id_table"));
-		bdd.from("tables");
-
-		int max = 0;
-		for (ResultSet map : bdd.execute()) {
-			if ((int) map.get("id_table") > max)
-				max = (int) map.get("id_table");
-		}
-		idTable = max;	
-	}
+	protected abstract void initTable() throws DefaultException, TableNotFoundException, BadRequestException;
+	public abstract void open() throws DefaultException, TableNotFoundException, BadRequestException; 
+	protected abstract void createTable() throws DefaultException, TableNotFoundException, BadRequestException;
+	public abstract void createColonnes(ResultSet resultSet) throws TableNotFoundException, BadRequestException;
+	
 
 	protected void update(String colonneName, String value) throws DefaultException, BadRequestException, TableNotFoundException {
 		bdd.update(new BddColonne("tables", colonneName), value);
@@ -171,6 +140,22 @@ public abstract class Table {
 
 	public int getIdTable() {
 		return idTable;
+	}
+
+	public String getIdLigneName() {
+		return idLigneName;
+	}
+
+	public void setIdLigneName(String idLigneName) {
+		this.idLigneName = idLigneName;
+	}
+
+	public ObservableList<LigneTest> getLignesTest() {
+		return lignesTest;
+	}
+
+	public void setLignesTest(ObservableList<LigneTest> lignesTest) {
+		this.lignesTest = lignesTest;
 	}
 
 }

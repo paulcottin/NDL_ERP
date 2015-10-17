@@ -1,4 +1,4 @@
-package vues;
+package vues.inscription;
 
 import exceptions.DefaultException;
 import javafx.collections.FXCollections;
@@ -15,6 +15,7 @@ import model.ERP;
 import model.interfaces.Table;
 import model.interfaces.TableType;
 import model.tables.Inscription;
+import vues.Grille;
 import vues.listeners.ChangementInscription;
 
 public class VueInscription extends BorderPane{

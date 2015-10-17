@@ -2,6 +2,7 @@ package model;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Optional;
 
 import exceptions.BadRequestException;
@@ -24,13 +25,16 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.util.Pair;
-import model.connecteurs.AccessConnector;
+import model.connecteurs.Access;
 import model.connecteurs.GoogleConnector;
 import model.interfaces.BaseDonnee;
 import model.interfaces.Table;
 import model.interfaces.TableType;
+import model.tables.Evenement;
 import model.tables.Inscription;
+import model.tables.Personne;
 import utils.BddColonne;
+import utils.BddValue;
 import utils.ResultSet;
 import utils.WhereCondition;
 import vues.Fenetre;
@@ -39,12 +43,12 @@ public class ERP extends Application{
 
 	ObservableList<Table> tables;
 	GoogleConnector google;
-	AccessConnector bdd;
+	BaseDonnee bdd;
 	int lastTableID;
 
 	public ERP() throws DefaultException {
 		this.tables = FXCollections.observableArrayList();
-		bdd = new AccessConnector();
+		bdd = new Access();
 		google = new GoogleConnector();
 		try {
 			bdd.connect(new File("C:\\Users\\polob\\Documents\\bdd_erp.accdb"), "");
@@ -66,8 +70,14 @@ public class ERP extends Application{
 		bdd.from("tables");
 		bdd.where(new WhereCondition("tables", "type", BaseDonnee.EGAL, TableType.INSCRIPTION));
 		for (ResultSet map: bdd.execute()) {
-			//TODO : Instanciation automatique en fonction du type de table
-			tables.add(new Inscription(bdd, (int) map.get("id_table")));
+			if(map.get("type").equals(TableType.INSCRIPTION))
+				tables.add(new Inscription(bdd, (int) map.get("id_table")));
+			else if (map.get("type").equals(TableType.PERSONNE))
+				tables.add(new Personne(bdd, (int) map.get("id_table")));
+			else if (map.get("type").equals(TableType.EVENEMENT))
+				tables.add(new Evenement(bdd, (int) map.get("id_table")));
+			else 
+				throw new DefaultException("Type de table incorrect !");
 		}
 	}
 
@@ -119,23 +129,33 @@ public class ERP extends Application{
 			}
 		}
 		google.setGoogleID(tab[index]);
-		Table ins = new Inscription(bdd);
-		ins.setType("inscription");
-		ins.setFamille("inscription");
-		ins.setNom(nom);
+		
+		ArrayList<BddValue> values = new ArrayList<BddValue>();
+		values.add(new BddValue("nom_table", nom));
+		values.add(new BddValue("famille", "inscription"));
+		values.add(new BddValue("type", "test"));
+		values.add(new BddValue("id_ligne_name", "id_ligne"));
+		Table ins = new Inscription(bdd, values);
 		google.connect();
 		try {
 			google.queryLignes();
 		} catch (DefaultException e) {
 			e.printMessage();
 		}
-		for (ObservableList<Pair<String, String>> list : google.getLignes()) {
-			Ligne l = new Ligne(bdd, ins.getIdTable());
-			for (Pair<String, String> pair : list) {
-				l.add(pair.getKey(), pair.getValue());
-			}
-		}
-		tables.add(ins);
+		
+		//Création des colonnes
+		System.out.println("nombres de lignes : "+google.getLignes().size());
+		if (google.getLignes().size() == 0) throw new BadRequestException("Impossible de créer une colonne null");
+		ins.createColonnes(google.getLignes().get(0));
+//		
+//		for (ObservableList<Pair<String, String>> list : google.getLignes()) {
+//			LigneTest l = new LigneTest(bdd, ins.getIdTable(), values);
+//			for (Pair<String, String> pair : list) {
+//				l.add(pair.getKey(), pair.getValue());
+//			}
+//		}
+//		tables.add(ins);
+		
 		System.out.println("done");
 //			f.createTable();
 //			progressBar = f.getProgressBar();

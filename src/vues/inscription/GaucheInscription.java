@@ -1,4 +1,4 @@
-package vues;
+package vues.inscription;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.FXCollections;

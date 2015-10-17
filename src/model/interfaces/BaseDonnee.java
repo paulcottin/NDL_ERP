@@ -41,6 +41,7 @@ public interface BaseDonnee {
 	public static final String UPDATE = "update";
 	public static final String DELETE = "delete";
 	public static final String INSERT = "insert";
+	public static final String CREATE_TABLE = "createTable";
 	public static final String ADD_COL = "add_col";
 	public static final String REMOVE_COL = "remove_col";
 
@@ -48,14 +49,25 @@ public interface BaseDonnee {
 	public void connect(File file, String mdp) throws IdentificationException, ConnexionException, FileNotFoundException;
 	
 	public void select(BddColonne... selects);
+	public void selectAll();
 	public void from(String... froms) throws TableNotFoundException;
 	public void where(WhereCondition... wheres);
 	
 	public void delete(String inTableName) throws TableNotFoundException;
 	public void update(BddColonne tableNameColonneName, Object value) throws TableNotFoundException;
 	public void insert(String tableName, Collection<BddValue> values) throws TableNotFoundException;
-	public void addCol(String colonneName, String typeDonnees);
+//	public void insertMultiple(String tableName, Collection<BddValue> values) throws TableNotFoundException;
+	
+	public void createPhysicalTable(String tableName, String idLigneName) throws BadRequestException;
+	public void addCol(BddColonne colonne, String typeDonnees) throws BadRequestException;
 	public void removeCol(String colonneName) throws ColonneNotfoundException;
 	
 	public ArrayList<ResultSet> execute() throws BadRequestException;
+	
+	public abstract String getStringType();
+	public abstract String getIntType();
+	public abstract String getDateType();
+	public abstract String getDoubleType();
+	public abstract String getLargeStringType();
+	public abstract String getBooleanType();
 }

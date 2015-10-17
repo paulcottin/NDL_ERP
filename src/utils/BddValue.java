@@ -11,7 +11,6 @@ public class BddValue extends Pair<String, Object>{
 
 	public BddValue(String colonneName, Object value) {
 		super(colonneName, value);
-		// TODO Auto-generated constructor stub
 	}
 	
 	public String getColonne() {

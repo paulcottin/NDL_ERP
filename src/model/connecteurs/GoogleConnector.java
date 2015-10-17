@@ -21,21 +21,23 @@ import exceptions.MyException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.util.Pair;
+import utils.BddValue;
+import utils.ResultSet;
 
 public class GoogleConnector {
 
 	private String googleID;
 	private DriveQuickstart drive;
 	private String fileName;
-	private ObservableList<ObservableList<Pair<String, String>>> lignes;
+	private ArrayList<ResultSet> lignes;
  
 	public GoogleConnector() {
-		lignes = FXCollections.observableArrayList();
+		lignes = new ArrayList<ResultSet>();
 	}
 	
 	public GoogleConnector(String googleID) throws DefaultException {
 		this.googleID = googleID;
-		lignes = FXCollections.observableArrayList();
+		lignes = new ArrayList<ResultSet>();
 	}
 
 	private void waitCSV(){
@@ -73,15 +75,14 @@ public class GoogleConnector {
 		}
 		
 		Iterator<CSVRecord> iter = records.iterator();
-		int index = 0;
 		iter.next();
 		while (iter.hasNext()) {
 			CSVRecord record = iter.next();
-			lignes.add(FXCollections.observableArrayList());
+			ResultSet res = new ResultSet();
 			for (int i = 0; i < record.size(); i++) {
-				lignes.get(index).add(new Pair<String, String>(headerTab[i], record.get(i)));
+				res.add(new BddValue(headerTab[i], record.get(i)));
 			}
-			index++;
+			lignes.add(res);
 		}
 	}
 
@@ -174,11 +175,11 @@ public class GoogleConnector {
 		this.googleID = googleID;
 	}
 
-	public ObservableList<ObservableList<Pair<String, String>>> getLignes() {
+	public ArrayList<ResultSet> getLignes() {
 		return lignes;
 	}
 
-	public void setLignes(ObservableList<ObservableList<Pair<String, String>>> lignes) {
+	public void setLignes(ArrayList<ResultSet> lignes) {
 		this.lignes = lignes;
 	}
 

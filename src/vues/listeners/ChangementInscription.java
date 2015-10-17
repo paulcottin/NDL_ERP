@@ -5,7 +5,7 @@ import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import vues.VueInscription;
+import vues.inscription.VueInscription;
 
 public class ChangementInscription implements EventHandler<ActionEvent>{
 
@@ -18,7 +18,7 @@ public class ChangementInscription implements EventHandler<ActionEvent>{
 	@Override
 	public void handle(ActionEvent event) {
 		try {
-			if (!vue.getGauche().getInscription().isConstructed()) vue.getGauche().getInscription().construct();
+			if (!vue.getGauche().getInscription().isConstructed()) vue.getGauche().getInscription().open();
 		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
