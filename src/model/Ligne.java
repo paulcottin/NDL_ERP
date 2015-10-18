@@ -2,6 +2,7 @@ package model;
 
 import java.util.ArrayList;
 import exceptions.BadRequestException;
+import exceptions.ColonneNotfoundException;
 import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
 import javafx.beans.property.SimpleStringProperty;
@@ -21,7 +22,7 @@ public class Ligne {
 	int idLigne;
 	int idTable;
 	
-	public Ligne(BaseDonnee bdd, int idTable) throws DefaultException, TableNotFoundException, BadRequestException {
+	public Ligne(BaseDonnee bdd, int idTable) throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
 		this.bdd = bdd;
 		data = FXCollections.observableArrayList();
 		colonnesNames = new ArrayList<String>();
@@ -30,7 +31,7 @@ public class Ligne {
 	}
 	
 	
-	public Ligne(BaseDonnee bdd, int idLigne, int idTable) throws DefaultException, TableNotFoundException, BadRequestException {
+	public Ligne(BaseDonnee bdd, int idLigne, int idTable) throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
 		this.bdd = bdd;
 		this.idLigne = idLigne;
 		this.idTable = idTable;
@@ -40,26 +41,26 @@ public class Ligne {
 		constructLigne();
 	}
 	
-	private void constructLigne() throws DefaultException, BadRequestException, TableNotFoundException {
+	private void constructLigne() throws DefaultException, BadRequestException, TableNotFoundException, ColonneNotfoundException {
 		bdd.select(new BddColonne("donnees", "id"),
 				new BddColonne("donnees", "nom_colonne"));
 		bdd.from("donnees");
 		bdd.where(new WhereCondition("donnees", "id_ligne", BaseDonnee.EGAL, idLigne));
 		
 		for (ResultSet map: bdd.execute()) {
-			if (!colonnesNames.contains((String) map.get("nom_colonne")))
-				colonnesNames.add((String) map.get("nom_colonne"));
-			data.add(new Donnee(bdd, (int) map.get("id"), idLigne, idTable));
+			if (!colonnesNames.contains((String) map.get("nom_colonne").getValue()))
+				colonnesNames.add((String) map.get("nom_colonne").getValue());
+			data.add(new Donnee(bdd, (int) map.get("id").getValue(), idLigne, idTable));
 		}
 	}
 	
-	private void createLigne() throws DefaultException, BadRequestException, TableNotFoundException {
+	private void createLigne() throws DefaultException, BadRequestException, TableNotFoundException, ColonneNotfoundException {
 		bdd.select(new BddColonne("donnees", "id_ligne"));
 		bdd.from("donnees");
 		
 		ArrayList<ResultSet> res = bdd.execute();
 		if ((int) res.size() > 0)
-			idLigne = (int) res.get(res.size()-1).get("id_ligne");
+			idLigne = (int) res.get(res.size()-1).get("id_ligne").getValue();
 		else
 			idLigne = 0;
 		idLigne++;		

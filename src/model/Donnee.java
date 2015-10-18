@@ -63,13 +63,13 @@ public class Donnee {
 
 		ResultSet res = bdd.execute().get(0);
 
-		idLigne = (int) res.get("id_ligne");
-		idTable = (int) res.get("id_table");
-		nomColonne  = (String) res.get("nom_colonne");
-		visible = (boolean) res.get("visible");
-		value.set((String) res.get("valeur"));
+		idLigne = (int) res.get("id_ligne").getValue();
+		idTable = (int) res.get("id_table").getValue();
+		nomColonne  = (String) res.get("nom_colonne").getValue();
+		visible = (boolean) res.get("visible").getValue();
+		value.set((String) res.get("valeur").getValue());
 
-		String accessType = (String) res.get("type");
+		String accessType = (String) res.get("type").getValue();
 		switch (accessType) {
 		case INT:
 			this.type = INT;
@@ -101,7 +101,7 @@ public class Donnee {
 		bdd.select(new BddColonne("donnees", "id"));
 		bdd.from("donnees");
 		ArrayList<ResultSet> res = bdd.execute();
-		id = (int) res.get(res.size()-1).get("id");
+		id = (int) res.get(res.size()-1).get("id").getValue();
 	}
 
 	private void update(String colonneName, Object value) throws DefaultException, BadRequestException, TableNotFoundException{

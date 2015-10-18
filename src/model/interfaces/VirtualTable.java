@@ -3,6 +3,7 @@ package model.interfaces;
 import java.util.ArrayList;
 
 import exceptions.BadRequestException;
+import exceptions.ColonneNotfoundException;
 import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
 import model.Ligne;
@@ -21,7 +22,7 @@ public abstract class VirtualTable extends Table{
 		super(bdd, idTable);
 	}
 	
-	protected void createTable() throws DefaultException, TableNotFoundException, BadRequestException {
+	protected void createTable() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
 		bdd.insert("tables", new ArrayList<BddValue>());
 		bdd.execute();
 
@@ -30,8 +31,8 @@ public abstract class VirtualTable extends Table{
 
 		int max = 0;
 		for (ResultSet map : bdd.execute()) {
-			if ((int) map.get("id_table") > max)
-				max = (int) map.get("id_table");
+			if ((int) map.get("id_table").getValue() > max)
+				max = (int) map.get("id_table").getValue();
 		}
 		idTable = max;	
 	}
@@ -40,7 +41,7 @@ public abstract class VirtualTable extends Table{
 		//TODO
 	}
 	
-	public void open() throws DefaultException, TableNotFoundException, BadRequestException {
+	public void open() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
 		try {
 			bdd.select(new BddColonne("donnees", "id_ligne"));
 			bdd.from("donnees");
@@ -49,7 +50,7 @@ public abstract class VirtualTable extends Table{
 			ArrayList<Integer> ids = new ArrayList<Integer>();
 			for (ResultSet m : bdd.execute()) 
 				if (!ids.contains(m.get("id_ligne")))
-					ids.add((Integer) m.get("id_ligne"));
+					ids.add((Integer) m.get("id_ligne").getValue());
 
 			for (Integer integer : ids) 
 				lignes.add(new Ligne(bdd, integer, idTable));
@@ -60,7 +61,7 @@ public abstract class VirtualTable extends Table{
 		constructed = true;
 	}
 	
-	protected void initTable() throws DefaultException, TableNotFoundException, BadRequestException {
+	protected void initTable() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
 		bdd.select(new BddColonne("tables", "nom_table"), 
 				new BddColonne("tables", "famille"), 
 				new BddColonne("tables", "type"));
@@ -68,9 +69,9 @@ public abstract class VirtualTable extends Table{
 		bdd.where(new WhereCondition("tables", "id_table", BaseDonnee.EGAL, idTable));
 
 		ResultSet res = bdd.execute().get(0);
-		nom = (String) res.get("nom_table");
-		famille = (String) res.get("famille");
-		type = (String) res.get("type"); 
+		nom = (String) res.get("nom_table").getValue();
+		famille = (String) res.get("famille").getValue();
+		type = (String) res.get("type").getValue(); 
 	}
 
 }

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import exceptions.BadRequestException;
+import exceptions.ColonneNotfoundException;
 import exceptions.ConnexionException;
 import exceptions.DefaultException;
 import exceptions.IdentificationException;
@@ -60,24 +61,25 @@ public class ERP extends Application{
 
 		try {
 			initTables();
-		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException | ColonneNotfoundException e) {
 			e.printMessage();
+			e.printStackTrace();
 		}
 	}
 
-	private void initTables() throws DefaultException, BadRequestException, TableNotFoundException {
+	private void initTables() throws DefaultException, BadRequestException, TableNotFoundException, ColonneNotfoundException {
 		bdd.select(new BddColonne("tables", "id_table"), new BddColonne("tables", "type"));
 		bdd.from("tables");
-		bdd.where(new WhereCondition("tables", "type", BaseDonnee.EGAL, TableType.INSCRIPTION));
+//		bdd.where(new WhereCondition("tables", "type", BaseDonnee.EGAL, TableType.INSCRIPTION));
 		for (ResultSet map: bdd.execute()) {
-			if(map.get("type").equals(TableType.INSCRIPTION))
-				tables.add(new Inscription(bdd, (int) map.get("id_table")));
-			else if (map.get("type").equals(TableType.PERSONNE))
-				tables.add(new Personne(bdd, (int) map.get("id_table")));
-			else if (map.get("type").equals(TableType.EVENEMENT))
-				tables.add(new Evenement(bdd, (int) map.get("id_table")));
+			if(map.get("type").getValue().equals(TableType.INSCRIPTION))
+				tables.add(new Inscription(bdd, (int) map.get("id_table").getValue()));
+			else if (map.get("type").getValue().equals(TableType.PERSONNE))
+				tables.add(new Personne(bdd, (int) map.get("id_table").getValue()));
+			else if (map.get("type").getValue().equals(TableType.EVENEMENT))
+				tables.add(new Evenement(bdd, (int) map.get("id_table").getValue()));
 			else 
-				throw new DefaultException("Type de table incorrect !");
+				throw new DefaultException("Type de table ("+map.get("type").getValue()+") incorrect !");
 		}
 	}
 

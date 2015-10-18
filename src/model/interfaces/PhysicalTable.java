@@ -3,6 +3,7 @@ package model.interfaces;
 import java.util.ArrayList;
 
 import exceptions.BadRequestException;
+import exceptions.ColonneNotfoundException;
 import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
 import model.LigneTest;
@@ -22,7 +23,7 @@ public abstract class PhysicalTable extends Table {
 		super(bdd, idTable);
 	}
 	
-	protected void createTable() throws DefaultException, TableNotFoundException, BadRequestException {
+	protected void createTable() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
 		//creation dans la table tables
 		bdd.insert("tables", initialValues);
 		bdd.execute();
@@ -30,7 +31,7 @@ public abstract class PhysicalTable extends Table {
 		bdd.select(new BddColonne("tables", "id_table"));
 		bdd.from("tables");
 		ArrayList<ResultSet> res = bdd.execute();
-		idTable = (int) res.get(res.size()-1).get("id_table");
+		idTable = (int) res.get(res.size()-1).get("id_table").getValue();
 		
 		//Creation en vrai
 		bdd.createPhysicalTable(nom, idLigneName);
@@ -58,7 +59,7 @@ public abstract class PhysicalTable extends Table {
 		}
 	}
 	
-	protected void initTable() throws DefaultException, TableNotFoundException, BadRequestException {
+	protected void initTable() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
 		//Chargement des infos de base sur la table
 		bdd.select(new BddColonne("tables", "nom_table"), 
 				new BddColonne("tables", "famille"), 
@@ -68,10 +69,11 @@ public abstract class PhysicalTable extends Table {
 		bdd.where(new WhereCondition("tables", "id_table", BaseDonnee.EGAL, idTable));
 		
 		ResultSet res = bdd.execute().get(0);
-		nom = (String) res.get("nom_table");
-		famille = (String) res.get("famille");
-		type = (String) res.get("type");
-		idLigneName = (String) res.get("id_ligne_name");
+		nom = (String) res.get("nom_table").getValue();
+		famille = (String) res.get("famille").getValue();
+		type = (String) res.get("type").getValue();
+		idLigneName = (String) res.get("id_ligne_name").getValue();
+		open();
 	}
 
 }

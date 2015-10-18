@@ -3,6 +3,7 @@ package model.interfaces;
 import java.util.ArrayList;
 
 import exceptions.BadRequestException;
+import exceptions.ColonneNotfoundException;
 import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
 import javafx.collections.FXCollections;
@@ -33,18 +34,18 @@ public abstract class Table {
 		this.initialValues = values;
 		for (BddValue bddValue : initialValues) {
 			if (bddValue.getColonne().equals("nom_table"))
-				nom = (String) bddValue.getValue();
+				nom = (String) bddValue.getValue().getValue();
 			else if (bddValue.getColonne().equals("famille"))
-				famille = (String) bddValue.getValue();
+				famille = (String) bddValue.getValue().getValue();
 			else if (bddValue.getColonne().equals("type"))
-				type = (String) bddValue.getValue();
+				type = (String) bddValue.getValue().getValue();
 			else if (bddValue.getColonne().equals("id_ligne_name"))
-				idLigneName = (String) bddValue.getValue();
+				idLigneName = (String) bddValue.getValue().getValue();
 		}
 		constructed = false;
 		try {
 			createTable();
-		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException | ColonneNotfoundException e) {
 			e.printMessage();
 		}
 	}
@@ -58,14 +59,15 @@ public abstract class Table {
 		constructed = false;
 		try {
 			initTable();
-		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException | ColonneNotfoundException e) {
 			e.printMessage();
+			e.printStackTrace();
 		}
 	}
 
-	protected abstract void initTable() throws DefaultException, TableNotFoundException, BadRequestException;
-	public abstract void open() throws DefaultException, TableNotFoundException, BadRequestException; 
-	protected abstract void createTable() throws DefaultException, TableNotFoundException, BadRequestException;
+	protected abstract void initTable() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException;
+	public abstract void open() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException; 
+	protected abstract void createTable() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException;
 	public abstract void createColonnes(ResultSet resultSet) throws TableNotFoundException, BadRequestException;
 	
 

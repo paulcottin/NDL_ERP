@@ -3,6 +3,7 @@ package model.tables;
 import java.util.ArrayList;
 
 import exceptions.BadRequestException;
+import exceptions.ColonneNotfoundException;
 import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
 import javafx.collections.FXCollections;
@@ -32,18 +33,18 @@ public class Inscription extends PhysicalTable {
 		urls = FXCollections.observableArrayList();
 		try {
 			constructInscription();
-		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException | ColonneNotfoundException e) {
 			e.printMessage();
 		}
 	}
 	
-	private void constructInscription() throws DefaultException, BadRequestException, TableNotFoundException{
+	private void constructInscription() throws DefaultException, BadRequestException, TableNotFoundException, ColonneNotfoundException{
 		bdd.select(new BddColonne("pagesWeb", "url"));
 		bdd.from("pagesWeb");
 		bdd.where(new WhereCondition("pagesWeb", "id_table", BaseDonnee.EGAL, idTable));
 		
 		for (ResultSet map : bdd.execute())
-			urls.add((String) map.get("url"));
+			urls.add((String) map.get("url").getValue());
 	}
 	
 	public String toString() {
