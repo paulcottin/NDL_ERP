@@ -86,7 +86,6 @@ public class Adresse {
 	//TODO getter et setter avec update dans la bdd
 	
 	public String toString() {
-		System.out.println("to string");
 		return numero+" "+rue+" "+codePostal+" "+ville+" "+pays+ ((cedex != "" && cedex != null)? " Cedex "+cedex : "");
 	}
 }

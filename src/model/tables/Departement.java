@@ -12,7 +12,7 @@ import utils.WhereCondition;
 public class Departement {
 
 	public static final String TABLE_DEPARTEMENT = "departement";
-	public static final String ID = "id_departement";
+	public static final String ID = "id_dep";
 	
 	private static final String NOM = "nom";
 	private static final String ID_DIRECTEUR = "id_directeur";
@@ -43,10 +43,11 @@ public class Departement {
 				break;
 			case ID_DIRECTEUR :
 				int idDir = (int) value.getValue().getValue();
-				directeur = new Personne(bdd, idDir);
+				//TODO La classe Personne définie une table de bd de type personne et non une personne, à revoir
+//				directeur = new Personne(bdd, idDir);
 				break;
 			default:
-				throw new ColonneNotfoundException(value.getColonne());
+				throw new ColonneNotfoundException(TABLE_DEPARTEMENT+"."+value.getColonne());
 			}
 		}
 	}

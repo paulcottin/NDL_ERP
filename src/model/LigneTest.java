@@ -86,6 +86,14 @@ public class LigneTest {
 		}
 		
 	}
+	
+	public String toString() {
+		String s = "";
+		for (BddValue bddValue : data) {
+			s += "\t"+bddValue.getColonne()+" => "+bddValue.getValue().getValue() + "\n";
+		}
+		return s;
+	}
 
 	public ResultSet getData() {
 		return data;
