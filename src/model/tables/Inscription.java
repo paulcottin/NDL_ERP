@@ -23,13 +23,13 @@ public class Inscription extends PhysicalTable {
 	
 	public Inscription(BaseDonnee bdd, ArrayList<BddValue> values) throws TableNotFoundException, DefaultException, BadRequestException {
 		super(bdd, values);
-		type = TableType.INSCRIPTION;
+		type.set(TableType.INSCRIPTION);
 		urls = FXCollections.observableArrayList();
 	}
 	
 	public Inscription(BaseDonnee bdd, int idTable) throws TableNotFoundException, DefaultException, BadRequestException {
 		super(bdd, idTable);
-		type = TableType.INSCRIPTION;
+		type.set(TableType.INSCRIPTION);
 		urls = FXCollections.observableArrayList();
 		try {
 			constructInscription();
@@ -48,7 +48,7 @@ public class Inscription extends PhysicalTable {
 	}
 	
 	public String toString() {
-		return nom;
+		return nom.get();
 	}
 
 	public ObservableList<String> getUrls() {
@@ -57,6 +57,11 @@ public class Inscription extends PhysicalTable {
 
 	public void setUrls(ObservableList<String> urls) {
 		this.urls = urls;
+	}
+
+	@Override
+	protected void habillageDonnees() throws ColonneNotfoundException, TableNotFoundException, BadRequestException, DefaultException {
+		
 	}
 
 }

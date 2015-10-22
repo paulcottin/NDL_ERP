@@ -1,10 +1,12 @@
 package utils;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import exceptions.ColonneNotfoundException;
 import javafx.beans.value.ObservableObjectValue;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableListBase;
 
 public class ResultSet extends ArrayList<BddValue>{
 
@@ -39,5 +41,12 @@ public class ResultSet extends ArrayList<BddValue>{
 		if (index == -1) throw new ColonneNotfoundException(colonneName);
 		return index;
 	}
-
+	
+	public boolean isColonne(String colonneName) {
+		for (BddValue value : this) {
+			if (value.getColonne().equals(colonneName))
+				return true;
+		}
+		return false;
+	}
 }

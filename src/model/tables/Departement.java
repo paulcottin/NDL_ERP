@@ -12,10 +12,10 @@ import utils.WhereCondition;
 public class Departement {
 
 	public static final String TABLE_DEPARTEMENT = "departement";
-	public static final String ID = "id_dep";
+	public static final String ID = "id_departement";
 	
 	private static final String NOM = "nom";
-	private static final String ID_DIRECTEUR = "id_directeur";
+	private static final String ID_DIRECTEUR = "id_personne";
 	
 	BaseDonnee bdd;
 	String nom;

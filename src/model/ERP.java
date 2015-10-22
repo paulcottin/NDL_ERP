@@ -34,6 +34,8 @@ import model.interfaces.TableType;
 import model.tables.Evenement;
 import model.tables.Inscription;
 import model.tables.Personne;
+import model.tables.SystemTable;
+import tasks.SearchTask;
 import utils.BddColonne;
 import utils.BddValue;
 import utils.ResultSet;
@@ -42,13 +44,17 @@ import vues.Fenetre;
 
 public class ERP extends Application{
 
-	ObservableList<Table> tables;
+	ObservableList<Table> tables; 
+	ObservableList<SystemTable> systemTables;
+	ObservableList<Pair<String, String>> systemData;
 	GoogleConnector google;
 	BaseDonnee bdd;
 	int lastTableID;
 
 	public ERP() throws DefaultException {
 		this.tables = FXCollections.observableArrayList();
+		this.systemTables = FXCollections.observableArrayList();
+		this.systemData = FXCollections.observableArrayList();
 		bdd = new Access();
 		google = new GoogleConnector();
 		try {
@@ -70,7 +76,6 @@ public class ERP extends Application{
 	private void initTables() throws DefaultException, BadRequestException, TableNotFoundException, ColonneNotfoundException {
 		bdd.select(new BddColonne("tables", "id_table"), new BddColonne("tables", "type"));
 		bdd.from("tables");
-//		bdd.where(new WhereCondition("tables", "type", BaseDonnee.EGAL, TableType.INSCRIPTION));
 		for (ResultSet map: bdd.execute()) {
 			if(map.get("type").getValue().equals(TableType.INSCRIPTION))
 				tables.add(new Inscription(bdd, (int) map.get("id_table").getValue()));
@@ -78,11 +83,20 @@ public class ERP extends Application{
 				tables.add(new Personne(bdd, (int) map.get("id_table").getValue()));
 			else if (map.get("type").getValue().equals(TableType.EVENEMENT))
 				tables.add(new Evenement(bdd, (int) map.get("id_table").getValue()));
+			else if (map.get("type").getValue().equals(TableType.SYSTEM))
+				systemTables.add(new SystemTable(bdd, (int) map.get("id_table").getValue()));
 			else 
 				throw new DefaultException("Type de table ("+map.get("type").getValue()+") incorrect !");
 		}
+		
+		//initialisation des données systemes
+		bdd.selectAll();
+		bdd.from("data");
+		for (ResultSet res : bdd.execute())
+			systemData.add(new Pair<String, String>((String) res.get("nom").getValue(), (String) res.get("valeur").getValue())); 
 	}
 
+	//TODO passer ça en tache
 	public void createTableFromGoogleSheet() throws DefaultException, TableNotFoundException, BadRequestException {
 		//Demande de l'URL et du nom de la table
 		Dialog<Pair<String, String>> bddDialog = new Dialog<>();
@@ -182,6 +196,26 @@ public class ERP extends Application{
 
 	public void setTables(ObservableList<Table> tables) {
 		this.tables = tables;
+	}
+
+	public BaseDonnee getBdd() {
+		return bdd;
+	}
+
+	public ObservableList<SystemTable> getSystemTables() {
+		return systemTables;
+	}
+
+	public void setSystemTables(ObservableList<SystemTable> systemTables) {
+		this.systemTables = systemTables;
+	}
+
+	public ObservableList<Pair<String, String>> getSystemData() {
+		return systemData;
+	}
+
+	public void setSystemData(ObservableList<Pair<String, String>> systemData) {
+		this.systemData = systemData;
 	}
 
 }

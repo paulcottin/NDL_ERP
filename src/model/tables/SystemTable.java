@@ -8,19 +8,16 @@ import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
 import model.interfaces.BaseDonnee;
 import model.interfaces.PhysicalTable;
-import model.interfaces.TableType;
 import utils.BddValue;
 
-public class Evenement extends PhysicalTable{
+public class SystemTable extends PhysicalTable{
 
-	public Evenement(BaseDonnee bdd, ArrayList<BddValue> values) throws TableNotFoundException, DefaultException, BadRequestException {
+	public SystemTable(BaseDonnee bdd, ArrayList<BddValue> values) throws TableNotFoundException, DefaultException, BadRequestException {
 		super(bdd, values);
-		type.set(TableType.EVENEMENT);
 	}
 	
-	public Evenement(BaseDonnee bdd, int idTable) throws TableNotFoundException, DefaultException, BadRequestException {
-		super(bdd, idTable);
-		type.set(TableType.EVENEMENT);
+	public SystemTable (BaseDonnee bdd, int id) throws TableNotFoundException, DefaultException, BadRequestException {
+		super(bdd, id);
 	}
 
 	@Override

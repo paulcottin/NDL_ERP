@@ -6,7 +6,7 @@ import exceptions.BadRequestException;
 import exceptions.ColonneNotfoundException;
 import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
-import model.LigneTest;
+import model.Ligne;
 import utils.BddColonne;
 import utils.BddValue;
 import utils.ResultSet;
@@ -34,30 +34,33 @@ public abstract class PhysicalTable extends Table {
 		idTable = (int) res.get(res.size()-1).get("id_table").getValue();
 		
 		//Creation en vrai
-		bdd.createPhysicalTable(nom, idLigneName);
+		bdd.createPhysicalTable(nom.get(), idLigneName.get());
 		bdd.execute();
 	}
 	
 	public void createColonnes(ResultSet resultSet) throws TableNotFoundException, BadRequestException {
-		System.out.println("create colonne ("+nom+"): \n"+resultSet.toString());
 		for (BddValue bddValue : resultSet) {
 			//TODO : comment fixer le type de données
-			bdd.addCol(new BddColonne(nom, bddValue.getColonne()), bdd.getStringType());
+			bdd.addCol(new BddColonne(nom.get(), bddValue.getColonne()), bdd.getStringType());
 			bdd.execute();
 		}
 		
 		
 	}
 	
-	public void open() throws DefaultException, TableNotFoundException, BadRequestException {
+	public void open() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
+		lignes.clear();
 		//Ouverture de la table et chargement des résultats
 		bdd.selectAll();
-		bdd.from(nom);
+		bdd.from(nom.get());
 		
 		for (ResultSet res : bdd.execute()) {
-			lignesTest.add(new LigneTest(bdd, idTable, res));
+			lignes.add(new Ligne(bdd, idTable, res));
 		}
+//		habillageDonnees();
 	}
+	
+	protected abstract void habillageDonnees() throws ColonneNotfoundException, TableNotFoundException, BadRequestException, DefaultException;
 	
 	protected void initTable() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
 		//Chargement des infos de base sur la table
@@ -69,11 +72,12 @@ public abstract class PhysicalTable extends Table {
 		bdd.where(new WhereCondition("tables", "id_table", BaseDonnee.EGAL, idTable));
 		
 		ResultSet res = bdd.execute().get(0);
-		nom = (String) res.get("nom_table").getValue();
-		famille = (String) res.get("famille").getValue();
-		type = (String) res.get("type").getValue();
-		idLigneName = (String) res.get("id_ligne_name").getValue();
+		nom.set((String) res.get("nom_table").getValue());
+		famille.set((String) res.get("famille").getValue());
+		type.set((String) res.get("type").getValue());
+		idLigneName.set((String) res.get("id_ligne_name").getValue());
 		open();
+		habillageDonnees();
 	}
 
 }

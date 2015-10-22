@@ -38,7 +38,7 @@ public abstract class VirtualTable extends Table{
 	}
 	
 	public void createColonnes(ResultSet colonnesNames) throws TableNotFoundException, BadRequestException {
-		//TODO
+		//TODO à implémenter quand la fonctionnalité sera développée
 	}
 	
 	public void open() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
@@ -53,7 +53,7 @@ public abstract class VirtualTable extends Table{
 					ids.add((Integer) m.get("id_ligne").getValue());
 
 			for (Integer integer : ids) 
-				lignes.add(new Ligne(bdd, integer, idTable));
+				lignes.add(new Ligne(bdd, idTable, integer));
 
 		} catch (ClassCastException e) {
 			throw new DefaultException("Erreur de conversion en entier");
@@ -69,9 +69,10 @@ public abstract class VirtualTable extends Table{
 		bdd.where(new WhereCondition("tables", "id_table", BaseDonnee.EGAL, idTable));
 
 		ResultSet res = bdd.execute().get(0);
-		nom = (String) res.get("nom_table").getValue();
-		famille = (String) res.get("famille").getValue();
-		type = (String) res.get("type").getValue(); 
+		nom.set((String) res.get("nom_table").getValue());
+		famille.set((String) res.get("famille").getValue());
+		type.set((String) res.get("type").getValue()); 
 	}
 
+	
 }

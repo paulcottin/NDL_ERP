@@ -3,110 +3,149 @@ package model;
 import java.util.ArrayList;
 import exceptions.BadRequestException;
 import exceptions.ColonneNotfoundException;
-import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import model.interfaces.BaseDonnee;
 import utils.BddColonne;
+import utils.BddValue;
 import utils.ResultSet;
 import utils.WhereCondition;
 
 public class Ligne {
-
-	ObservableList<Donnee> data;
-	ArrayList<String> colonnesNames;
-	BaseDonnee bdd;
-	int idLigne;
-	int idTable;
 	
-	public Ligne(BaseDonnee bdd, int idTable) throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
+	private ResultSet data;
+	private ObservableList<String> colonneNames;
+	private BaseDonnee bdd;
+	private int idLigne, idTable;
+	private String tableName, idLigneName;
+	
+	public Ligne(BaseDonnee bdd, int idTable, ArrayList<BddValue> values) throws TableNotFoundException, BadRequestException, ColonneNotfoundException {
 		this.bdd = bdd;
-		data = FXCollections.observableArrayList();
-		colonnesNames = new ArrayList<String>();
-		this.idTable = idTable;
-		createLigne();
+		openMetaData(idTable);
+		colonneNames = FXCollections.observableArrayList();
+		createLigne(values);
 	}
 	
-	
-	public Ligne(BaseDonnee bdd, int idLigne, int idTable) throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException {
+	public Ligne(BaseDonnee bdd, int idTable, ResultSet values) throws TableNotFoundException, BadRequestException {
 		this.bdd = bdd;
+		openMetaData(idTable);
+		this.data = new ResultSet();
+		colonneNames = FXCollections.observableArrayList();
+		for (BddValue bddValue : values) {
+			if (!colonneNames.contains(bddValue.getColonne()))
+				colonneNames.add(bddValue.getColonne());
+			if (bddValue.getColonne().equals(idLigneName))
+				idLigne = (int) bddValue.getValue().getValue();
+			data.add(bddValue);
+		}
+	}
+	
+	public Ligne(BaseDonnee bdd, int idTable, int idLigne) throws TableNotFoundException, BadRequestException {
+		this.bdd = bdd;
+		this.idTable = idTable;
 		this.idLigne = idLigne;
-		this.idTable = idTable;
-		data = FXCollections.observableArrayList();
-		colonnesNames = new ArrayList<String>();
-		
-		constructLigne();
+		colonneNames = FXCollections.observableArrayList();
+		openData();
 	}
 	
-	private void constructLigne() throws DefaultException, BadRequestException, TableNotFoundException, ColonneNotfoundException {
-		bdd.select(new BddColonne("donnees", "id"),
-				new BddColonne("donnees", "nom_colonne"));
-		bdd.from("donnees");
-		bdd.where(new WhereCondition("donnees", "id_ligne", BaseDonnee.EGAL, idLigne));
-		
-		for (ResultSet map: bdd.execute()) {
-			if (!colonnesNames.contains((String) map.get("nom_colonne").getValue()))
-				colonnesNames.add((String) map.get("nom_colonne").getValue());
-			data.add(new Donnee(bdd, (int) map.get("id").getValue(), idLigne, idTable));
+	private void createLigne(ArrayList<BddValue> values) throws TableNotFoundException, BadRequestException, ColonneNotfoundException {
+		//Récupérer les noms de colonnes
+		for (BddValue v : values) {
+			if (!colonneNames.contains(v.getColonne()))
+				colonneNames.add(v.getColonne());
 		}
-	}
-	
-	private void createLigne() throws DefaultException, BadRequestException, TableNotFoundException, ColonneNotfoundException {
-		bdd.select(new BddColonne("donnees", "id_ligne"));
-		bdd.from("donnees");
 		
+		//Insertion
+		bdd.insert(tableName, values);
+		bdd.from(tableName);
+		bdd.execute();
+		
+		//Récupération de l'idLigne
+		bdd.select(new BddColonne(tableName, idLigneName));
+		bdd.from(tableName);
 		ArrayList<ResultSet> res = bdd.execute();
-		if ((int) res.size() > 0)
-			idLigne = (int) res.get(res.size()-1).get("id_ligne").getValue();
-		else
-			idLigne = 0;
-		idLigne++;		
+		idLigne = (int) res.get(res.size()-1).get(idLigneName).getValue();
 	}
 	
-	public void add(String nomColonne, String value) throws DefaultException {
-		Donnee d = new Donnee(bdd, idLigne, idTable);
-		d.setNomColonne(nomColonne);
-		d.setValue(new SimpleStringProperty(value));
-		d.setVisible(true);
-		//TODO donner un type de manière dynamique
-		d.setType(Donnee.STRING);
-		d.setIdTable(idTable);
-	}
-	
-	public StringProperty getDonneeValue(String colonneName) {
-		for (Donnee donnee : data) {
-			if (donnee.getNomColonne().equals(colonneName))
-				return donnee.getValue();
+	private void openData() throws TableNotFoundException, BadRequestException {
+		//TODO : Gérer les colonnes qui ne viennent pas directement de la table
+		bdd.selectAll();
+		bdd.from(tableName);
+		bdd.where(new WhereCondition(tableName, idLigneName, BaseDonnee.EGAL, idLigne));
+		for (BddValue res : bdd.execute().get(0)) {
+			if (!colonneNames.contains(res.getColonne()))
+				colonneNames.add(res.getColonne());
+			if (res.getColonne().equals(idLigneName))
+				idLigne = (int) res.getValue().getValue();
+			data.add(res);
 		}
-		return new SimpleStringProperty();
+		
+	}
+	
+	private void openMetaData(int idTable) throws BadRequestException, TableNotFoundException {
+		this.idTable = idTable;
+		bdd.select(new BddColonne("tables", "id_table"), 
+				new BddColonne("tables", "nom_table"),
+				new BddColonne("tables", "id_ligne_name"));
+		bdd.from("tables");
+		bdd.where(new WhereCondition("tables", "id_table", BaseDonnee.EGAL, idTable));
+		ResultSet res =  bdd.execute().get(0);
+		this.idTable = (int) res.get("id_table").getValue();
+		tableName = (String) res.get("nom_table").getValue();
+		idLigneName = (String) res.get("id_ligne_name").getValue();
+	}
+	
+	public String toString() {
+		String s = "";
+		for (BddValue bddValue : data) {
+			s += "\t"+bddValue.getColonne()+" => "+bddValue.getValue().getValue() + "\n";
+		}
+		return s;
 	}
 
-	public ObservableList<Donnee> getData() {
+	public ResultSet getData() {
 		return data;
 	}
 
-	public void setData(ObservableList<Donnee> data) {
+	public void setData(ResultSet data) {
 		this.data = data;
 	}
 
-	public ArrayList<String> getColonnesNames() {
-		return colonnesNames;
+	public ObservableList<String> getColonneNames() {
+		return colonneNames;
 	}
 
-	public void setColonnesNames(ArrayList<String> colonnesNames) {
-		this.colonnesNames = colonnesNames;
+	public void setColonneNames(ObservableList<String> colonneNames) {
+		this.colonneNames = colonneNames;
 	}
-
 
 	public int getIdTable() {
 		return idTable;
 	}
 
-
 	public void setIdTable(int idTable) {
 		this.idTable = idTable;
 	}
+
+	public String getTableName() {
+		return tableName;
+	}
+
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
+	}
+
+	public String getIdLigneName() {
+		return idLigneName;
+	}
+
+	public void setIdLigneName(String idLigneName) {
+		this.idLigneName = idLigneName;
+	}
+
+	public int getIdLigne() {
+		return idLigne;
+	}
+
 }

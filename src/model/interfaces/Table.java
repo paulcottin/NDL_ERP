@@ -6,10 +6,13 @@ import exceptions.BadRequestException;
 import exceptions.ColonneNotfoundException;
 import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.util.Pair;
 import model.Ligne;
-import model.LigneTest;
+import tasks.SearchTask;
 import utils.BddColonne;
 import utils.BddValue;
 import utils.ResultSet;
@@ -18,9 +21,8 @@ import utils.WhereCondition;
 public abstract class Table {
 
 	protected int idTable;
-	protected String nom, famille, type, idLigneName;
+	protected StringProperty nom, famille, type, idLigneName;
 	protected ObservableList<Ligne> lignes;
-	protected ObservableList<LigneTest> lignesTest;
 	protected ObservableList<Option> options;
 	protected ArrayList<BddValue> initialValues;
 	protected boolean constructed;
@@ -29,18 +31,17 @@ public abstract class Table {
 	public Table(BaseDonnee bdd, ArrayList<BddValue> values) {
 		this.bdd = bdd;
 		lignes = FXCollections.observableArrayList();
-		lignesTest = FXCollections.observableArrayList();
 		options = FXCollections.observableArrayList();
 		this.initialValues = values;
 		for (BddValue bddValue : initialValues) {
 			if (bddValue.getColonne().equals("nom_table"))
-				nom = (String) bddValue.getValue().getValue();
+				nom = new SimpleStringProperty((String) bddValue.getValue().getValue());
 			else if (bddValue.getColonne().equals("famille"))
-				famille = (String) bddValue.getValue().getValue();
+				famille = new SimpleStringProperty((String) bddValue.getValue().getValue());
 			else if (bddValue.getColonne().equals("type"))
-				type = (String) bddValue.getValue().getValue();
+				type = new SimpleStringProperty((String) bddValue.getValue().getValue());
 			else if (bddValue.getColonne().equals("id_ligne_name"))
-				idLigneName = (String) bddValue.getValue().getValue();
+				idLigneName = new SimpleStringProperty((String) bddValue.getValue().getValue());
 		}
 		constructed = false;
 		try {
@@ -54,8 +55,11 @@ public abstract class Table {
 		this.bdd = accessConnector;
 		this.idTable = idTable;
 		lignes = FXCollections.observableArrayList();
-		lignesTest = FXCollections.observableArrayList();
 		options = FXCollections.observableArrayList();
+		nom = new SimpleStringProperty();
+		famille = new SimpleStringProperty();
+		idLigneName = new SimpleStringProperty();
+		type = new SimpleStringProperty();
 		constructed = false;
 		try {
 			initTable();
@@ -63,6 +67,11 @@ public abstract class Table {
 			e.printMessage();
 			e.printStackTrace();
 		}
+	}
+	
+	public void search(Table table, ArrayList<Pair<Table, Pair<String, Object>>> conditions) {
+		SearchTask search = new SearchTask(this, conditions);
+		search.run();
 	}
 
 	protected abstract void initTable() throws DefaultException, TableNotFoundException, BadRequestException, ColonneNotfoundException;
@@ -77,26 +86,26 @@ public abstract class Table {
 		bdd.execute();
 	}
 
-	public String getNom() {
+	public StringProperty getNom() {
 		return nom;
 	}
 
 	public void setNom(String nom) {
 		try {
-			this.nom = nom;
+			this.nom.set(nom);
 			update("nom_table", nom);
 		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
 		}
 	}
 
-	public String getFamille() {
+	public StringProperty getFamille() {
 		return famille;
 	}
 
 	public void setFamille(String famille) {
 		try {
-			this.famille = famille;
+			this.famille.set(famille);
 			update("famille", famille);
 		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
@@ -111,21 +120,13 @@ public abstract class Table {
 		this.options = options;
 	}
 
-	public ObservableList<Ligne> getLignes() {
-		return lignes;
-	}
-
-	public void setLignes(ObservableList<Ligne> lignes) {
-		this.lignes = lignes;
-	}
-
-	public String getType() {
+	public StringProperty getType() {
 		return type;
 	}
 
 	public void setType(String type) {
 		try {
-			this.type = type;
+			this.type.set(type);
 			update("type", type);
 		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
 			e.printMessage();
@@ -144,20 +145,24 @@ public abstract class Table {
 		return idTable;
 	}
 
-	public String getIdLigneName() {
+	public StringProperty getIdLigneName() {
 		return idLigneName;
 	}
 
 	public void setIdLigneName(String idLigneName) {
-		this.idLigneName = idLigneName;
+		this.idLigneName.set(idLigneName);
 	}
 
-	public ObservableList<LigneTest> getLignesTest() {
-		return lignesTest;
+	public ObservableList<Ligne> getLignes() {
+		return lignes;
 	}
 
-	public void setLignesTest(ObservableList<LigneTest> lignesTest) {
-		this.lignesTest = lignesTest;
+	public void setLignes(ObservableList<Ligne> lignesTest) {
+		this.lignes = lignesTest;
+	}
+
+	public BaseDonnee getBdd() {
+		return bdd;
 	}
 
 }

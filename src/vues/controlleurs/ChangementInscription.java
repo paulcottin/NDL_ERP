@@ -1,6 +1,7 @@
-package vues.listeners;
+package vues.controlleurs;
 
 import exceptions.BadRequestException;
+import exceptions.ColonneNotfoundException;
 import exceptions.DefaultException;
 import exceptions.TableNotFoundException;
 import javafx.event.ActionEvent;
@@ -19,7 +20,7 @@ public class ChangementInscription implements EventHandler<ActionEvent>{
 	public void handle(ActionEvent event) {
 		try {
 			if (!vue.getGauche().getInscription().isConstructed()) vue.getGauche().getInscription().open();
-		} catch (DefaultException | TableNotFoundException | BadRequestException e) {
+		} catch (DefaultException | TableNotFoundException | BadRequestException | ColonneNotfoundException e) {
 			e.printMessage();
 		}
 		vue.setInscription(vue.getGauche().getInscription());

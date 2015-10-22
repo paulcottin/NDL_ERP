@@ -16,7 +16,7 @@ import model.interfaces.Table;
 import model.interfaces.TableType;
 import model.tables.Inscription;
 import vues.Grille;
-import vues.listeners.ChangementInscription;
+import vues.controlleurs.ChangementInscription;
 
 public class VueInscription extends BorderPane{
 
@@ -69,7 +69,7 @@ public class VueInscription extends BorderPane{
 		//Si l'onglet n'est pas ouvert
 		else {
 			Grille grille = new Grille(inscription);
-			Tab ongletGrille = new Tab(inscription.getNom(), grille);
+			Tab ongletGrille = new Tab(inscription.getNom().get(), grille);
 			onglets.getTabs().add(ongletGrille);
 			onglets.getSelectionModel().clearAndSelect(onglets.getTabs().size()-1);
 		}

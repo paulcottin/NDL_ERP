@@ -12,14 +12,13 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import model.Ligne;
-import model.LigneTest;
 import model.interfaces.Table;
 
 public class Grille extends AnchorPane{
 
 	Table table;
-	TableView<LigneTest> tableView;
-	ObservableList<TableColumn<LigneTest, Object>> colonnes;
+	TableView<Ligne> tableView;
+	ObservableList<TableColumn<Ligne, Object>> colonnes;
 
 
 	public Grille(Table table) {
@@ -29,13 +28,13 @@ public class Grille extends AnchorPane{
 
 		//Ajout des colonnes
 		ArrayList<String> cols = new ArrayList<String>();
-		Iterator<LigneTest> iter = table.getLignesTest().iterator();
+		Iterator<Ligne> iter = table.getLignes().iterator();
 		while(iter.hasNext()) {
-			LigneTest l = iter.next();
+			Ligne l = iter.next();
 			for (String colonneName : l.getColonneNames()) {
 				if (!cols.contains(colonneName)) {
 					cols.add(colonneName);
-					TableColumn<LigneTest, Object> lastNameCol = new TableColumn<LigneTest, Object>(colonneName);
+					TableColumn<Ligne, Object> lastNameCol = new TableColumn<Ligne, Object>(colonneName);
 			        lastNameCol.setCellValueFactory(cellData -> cellData.getValue().getData().get(colonneName));
 			        tableView.getColumns().add(lastNameCol);
 				}
@@ -43,7 +42,7 @@ public class Grille extends AnchorPane{
 		}
 		
 		//Et des données
-		tableView.setItems(table.getLignesTest());
+		tableView.setItems(table.getLignes());
 		getChildren().add(tableView);
 //		setTopAnchor(tableView, (double) 0);
 	}

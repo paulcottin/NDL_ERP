@@ -18,26 +18,21 @@ import vues.Grille;
 public class VuePersonne extends BorderPane{
 
 	ERP erp;
+	Table table;
 	TabPane onglets;
 	Filtre filtre;
 	Label label;
-	ObservableList<Personne> liste;
 	
-	public VuePersonne(ERP erp) {
+	public VuePersonne(ERP erp, Table table) {
 		this.erp = erp;
-		liste = FXCollections.observableArrayList();
-		for (Table t : erp.getTables()) {
-			if (t.getType().equals(TableType.PERSONNE))
-				liste.add((Personne) t);
-		}
+		this.table = table;
 		init();
 	}
 	
 	public void init() {
-		
-		label = new Label(liste.get(0).getNom());
-		this.setTop(label);
-		this.setCenter(new Grille(liste.get(0)));
+		label = new Label(table.getNom().get());
+		this.setTop(new Filtre(table, erp));
+		this.setCenter(new Grille(table));
 	}
 	
 	

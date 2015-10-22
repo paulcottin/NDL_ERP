@@ -97,8 +97,7 @@ public class Access implements BaseDonnee{
 	@Override
 	public void delete(String inTableName) throws TableNotFoundException {
 		typeOperation = BaseDonnee.DELETE;
-		// TODO Auto-generated method stub
-
+		requete = "DELETE FROM "+inTableName+" ";
 	}
 
 	@Override
@@ -140,7 +139,7 @@ public class Access implements BaseDonnee{
 
 	@Override
 	public void removeCol(String colonneName) throws ColonneNotfoundException {
-		// TODO Auto-generated method stub
+		// TODO à implémenter quand la fonctionnalité sera développée
 
 	}
 
@@ -153,7 +152,7 @@ public class Access implements BaseDonnee{
 			stmt = con.createStatement();
 			java.sql.ResultSet res = null;
 			if (typeOperation.equals(BaseDonnee.INSERT) || typeOperation.equals(BaseDonnee.CREATE_TABLE)
-					|| typeOperation.equals(BaseDonnee.ADD_COL))
+					|| typeOperation.equals(BaseDonnee.ADD_COL) || typeOperation.equals(BaseDonnee.DELETE))
 				stmt.executeUpdate(requete);
 			else
 				res = stmt.executeQuery(requete);

@@ -24,7 +24,6 @@ public class Statut {
 		bdd.select(new BddColonne(TABLE_STATUT, NOM));
 		bdd.from(TABLE_STATUT);
 		bdd.where(new WhereCondition(TABLE_STATUT, ID, BaseDonnee.EGAL, id));
-		
 		nom = (String) bdd.execute().get(0).get(NOM).getValue();
 	}
 
